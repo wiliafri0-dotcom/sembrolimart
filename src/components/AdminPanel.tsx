@@ -139,7 +139,7 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
   const resetForm = () => {
     setFormData({
       name: '',
-      category: 'vegetables',
+      category: 'minyak',
       price: 0,
       image_url: '',
       description: '',
