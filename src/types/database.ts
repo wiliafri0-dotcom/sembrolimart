@@ -5,7 +5,7 @@ export type Database = {
         Row: {
           id: string;
           name: string;
-          category: 'minyak' | 'fish' | 'frozen' | 'spices';
+          category: 'vegetables' | 'fish' | 'frozen' | 'spices';
           price: number;
           image_url: string;
           description: string;
