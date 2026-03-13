@@ -220,7 +220,7 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
                       <option value="vegetables">Minyak</option>
                       <option value="fish">Tepung</option>
                       <option value="frozen">Gula</option>
-                      <option value="spices">Kitchen Spices</option>
+                      <option value="spices">Beras</option>
                     </select>
                   </div>
 
