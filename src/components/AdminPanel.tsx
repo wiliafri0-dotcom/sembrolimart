@@ -217,7 +217,7 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                       required
                     >
-                      <option value="vegetables">Vegetables</option>
+                      <option value="minyak">Minyak</option>
                       <option value="fish">Fresh Fish</option>
                       <option value="frozen">Frozen Food</option>
                       <option value="spices">Kitchen Spices</option>
