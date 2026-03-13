@@ -154,7 +154,7 @@ function App() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-green-600">
-                Rumah Mlijo
+                SEMBROLI MART
               </h1>
             </div>
 
