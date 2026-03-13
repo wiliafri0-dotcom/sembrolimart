@@ -21,7 +21,7 @@
 CREATE TABLE IF NOT EXISTS products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
-  category text NOT NULL CHECK (category IN ('minyak', 'fish', 'frozen', 'spices')),
+  category text NOT NULL CHECK (category IN ('vegetables', 'fish', 'frozen', 'spices')),
   price numeric NOT NULL CHECK (price >= 0),
   image_url text NOT NULL DEFAULT '',
   description text DEFAULT '',
