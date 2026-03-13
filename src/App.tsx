@@ -10,7 +10,7 @@ import type { Product, CartItem, CustomerInfo } from './types/database';
 const CATEGORY_LABELS: Record<string, string> = {
   all: 'Semua Produk',
   vegetables: 'Minyak',
-  fish: 'Fresh Fish',
+  fish: 'Tepung',
   frozen: 'Frozen Food',
   spices: 'Kitchen Spices',
 };
