@@ -136,7 +136,7 @@ function App() {
     message += 'Please confirm availability and total shipping costs. Thank you.';
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+    const whatsappUrl = `wa.me/6282136146737`;
 
     window.open(whatsappUrl, '_blank');
   };
