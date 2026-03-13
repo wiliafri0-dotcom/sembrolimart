@@ -11,8 +11,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   all: 'Semua Produk',
   vegetables: 'Minyak',
   fish: 'Tepung',
-  frozen: 'Frozen Food',
-  spices: 'Kitchen Spices',
+  frozen: 'Gula',
+  spices: 'Beras',
 };
 
 function App() {
