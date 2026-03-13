@@ -5,7 +5,7 @@
     - `products`
       - `id` (uuid, primary key)
       - `name` (text) - Product name
-      - `category` (text) - Product category (vegetables, fish, frozen, spices)
+      - `category` (text) - Product category (minyak, fish, frozen, spices)
       - `price` (numeric) - Unit price in Rupiah
       - `image_url` (text) - Product image URL
       - `description` (text, optional) - Product description
