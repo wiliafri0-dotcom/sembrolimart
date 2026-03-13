@@ -8,7 +8,7 @@ import { supabase } from './lib/supabase';
 import type { Product, CartItem, CustomerInfo } from './types/database';
 
 const CATEGORY_LABELS: Record<string, string> = {
-  all: 'All Products',
+  all: 'Semua Produk',
   vegetables: 'Minyak',
   fish: 'Fresh Fish',
   frozen: 'Frozen Food',
