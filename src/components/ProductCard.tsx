@@ -101,7 +101,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition duration-200 flex items-center justify-center gap-2"
         >
           <ShoppingCart className="w-5 h-5" />
-          Add to Cart
+          Masukan Keranjang
         </button>
       </div>
     </div>
