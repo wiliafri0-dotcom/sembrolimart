@@ -16,7 +16,7 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
-    category: 'vegetables',
+    category: 'minyak',
     price: 0,
     image_url: '',
     description: '',
