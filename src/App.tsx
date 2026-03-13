@@ -122,7 +122,7 @@ function App() {
     if (!customerInfo || cart.length === 0) return;
 
     let message = 'Halo, saya ingin memesan produk-produk berikut ini:\n\n';
-    message += '[ORDER LIST]\n';
+    message += '[List Orderan:]\n';
 
     cart.forEach((item) => {
       const itemTotal = item.price * item.quantity;
