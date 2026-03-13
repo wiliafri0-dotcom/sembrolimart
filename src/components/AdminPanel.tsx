@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Edit2, Trash2, Save } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, Save, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types/database';
 
@@ -23,10 +23,37 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
     in_stock: true,
   });
   const [loading, setLoading] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const filename = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from('products')
+        .upload(filename, file);
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from('products')
+        .getPublicUrl(filename);
+
+      setFormData({ ...formData, image_url: data.publicUrl });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -46,6 +73,11 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.image_url.trim()) {
+      alert('Please upload a product image');
+      return;
+    }
 
     try {
       if (editingId) {
@@ -211,16 +243,33 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Image URL
+                      Product Image
                     </label>
-                    <input
-                      type="url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                      placeholder="https://example.com/image.jpg"
-                      required
-                    />
+                    <div className="flex gap-2">
+                      <label className="flex-1 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                        <Upload className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Upload Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    {formData.image_url && (
+                      <div className="mt-2">
+                        <img
+                          src={formData.image_url}
+                          alt="Preview"
+                          className="h-32 w-32 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
+                    {uploadingImage && (
+                      <p className="text-sm text-gray-500 mt-2">Uploading...</p>
+                    )}
                   </div>
                 </div>
 

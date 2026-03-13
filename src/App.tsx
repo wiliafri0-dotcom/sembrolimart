@@ -156,9 +156,6 @@ function App() {
               <h1 className="text-2xl font-bold text-green-600">
                 Rumah Mlijo
               </h1>
-              {isAdmin && (
-                <p className="text-xs text-gray-600">Admin Mode</p>
-              )}
             </div>
 
             <div className="flex items-center gap-3">
