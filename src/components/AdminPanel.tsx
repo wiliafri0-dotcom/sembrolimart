@@ -218,7 +218,7 @@ export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProp
                       required
                     >
                       <option value="vegetables">Minyak</option>
-                      <option value="fish">Fresh Fish</option>
+                      <option value="fish">Tepung</option>
                       <option value="frozen">Frozen Food</option>
                       <option value="spices">Kitchen Spices</option>
                     </select>
