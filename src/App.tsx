@@ -121,7 +121,7 @@ function App() {
   const handleCheckout = () => {
     if (!customerInfo || cart.length === 0) return;
 
-    let message = 'Hello, I would like to order the following products:\n\n';
+    let message = 'Halo, saya ingin memesan produk-produk berikut ini:\n\n';
     message += '[ORDER LIST]\n';
 
     cart.forEach((item) => {
