@@ -130,10 +130,10 @@ function App() {
 });
 
     message += '\n\n---------------------------\n';
-    message += `Total Product Price: ${formatPrice(calculateTotal())}\n`;
-    message += `Orderer Name: ${customerInfo.name}\n`;
-    message += `Shipping Address: ${customerInfo.address}\n\n`;
-    message += 'Please confirm availability and total shipping costs. Thank you.';
+    message += `Total Harga Produk: ${formatPrice(calculateTotal())}\n`;
+    message += `Nama Pembeli: ${customerInfo.name}\n`;
+    message += `Alamat Antar: ${customerInfo.address}\n\n`;
+    message += 'Mohon bantuanya untuk mengecek ketersediaan barang yang saya pesan dan berapa ongkos kirimnya, Terima kasih!';
 
     const encodedMessage = encodeURIComponent(message);
     
