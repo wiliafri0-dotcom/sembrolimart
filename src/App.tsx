@@ -127,19 +127,21 @@ function App() {
     cart.forEach((item) => {
       const itemTotal = item.price * item.quantity;
       message += `- ${item.name} (${item.quantity}) - ${formatPrice(itemTotal)}\n`;
-    });
+});
 
-    message += '\n\n---------------------------\n';
-    message += `Total Product Price: ${formatPrice(calculateTotal())}\n`;
-    message += `Orderer Name: ${customerInfo.name}\n`;
-    message += `Shipping Address: ${customerInfo.address}\n\n`;
-    message += 'Please confirm availability and total shipping costs. Thank you.';
+    message += '\n\n---------------------------\n';
+    message += `Total Product Price: ${formatPrice(calculateTotal())}\n`;
+    message += `Orderer Name: ${customerInfo.name}\n`;
+    message += `Shipping Address: ${customerInfo.address}\n\n`;
+    message += 'Please confirm availability and total shipping costs. Thank you.';
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `wa.me/6282136146737`;
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Menambahkan parameter phone dengan kode negara 62
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=6282136146737&text=${encodedMessage}`;
 
-    window.open(whatsappUrl, '_blank');
-  };
+    window.open(whatsappUrl, '_blank');
+  };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
