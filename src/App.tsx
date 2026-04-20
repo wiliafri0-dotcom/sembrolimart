@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Search, ShoppingCart, Filter, Settings, LogOut } from 'lucide-react';
 import CustomerInfoModal from './components/CustomerInfoModal';
 import ProductCard from './components/ProductCard';
-import ShoppingCartComponent from './components/ShoppingCart';
+import CheckoutPage from './components/CheckoutPage';
 import AdminPanel from './components/AdminPanel';
 import { supabase } from './lib/supabase';
 import type { Product, CartItem, CustomerInfo } from './types/database';
@@ -21,7 +21,7 @@ function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -74,12 +74,12 @@ function App() {
     setCustomerInfo(null);
     setCart([]);
     setShowAdminPanel(false);
+    setShowCheckout(false);
   };
 
   const handleAddToCart = (product: Product, quantity: number) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
-
       if (existingItem) {
         return prevCart.map((item) =>
           item.id === product.id
@@ -87,14 +87,12 @@ function App() {
             : item
         );
       }
-
       return [...prevCart, { ...product, quantity }];
     });
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     if (quantity < 1) return;
-
     setCart((prevCart) =>
       prevCart.map((item) =>
         item.id === productId ? { ...item, quantity } : item
@@ -106,44 +104,19 @@ function App() {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
-  const calculateTotal = () => {
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const handleCheckout = () => {
-    if (!customerInfo || cart.length === 0) return;
-
-    let message = 'Halo, saya ingin memesan produk-produk berikut ini:\n\n';
-    message += '[List Orderan:]\n';
-
-    cart.forEach((item) => {
-      const itemTotal = item.price * item.quantity;
-      message += `- ${item.name} (${item.quantity}) - ${formatPrice(itemTotal)}\n`;
-});
-
-    message += '\n\n---------------------------\n';
-    message += `Total Harga Produk: ${formatPrice(calculateTotal())}\n`;
-    message += `Nama Pembeli: ${customerInfo.name}\n`;
-    message += `Alamat Antar: ${customerInfo.address}\n\n`;
-    message += 'Mohon bantuanya untuk mengecek ketersediaan barang yang saya pesan dan berapa ongkos kirimnya, Terima kasih!';
-
-    const encodedMessage = encodeURIComponent(message);
-    
-    // Menambahkan parameter phone dengan kode negara 62
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=6282136146737&text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank');
-  };
-
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (showCheckout && !isAdmin) {
+    return (
+      <CheckoutPage
+        cart={cart}
+        customerName={customerInfo?.name ?? ''}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveItem={handleRemoveItem}
+        onBack={() => setShowCheckout(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -180,7 +153,7 @@ function App() {
               ) : (
                 <>
                   <button
-                    onClick={() => setShowCart(true)}
+                    onClick={() => setShowCheckout(true)}
                     className="relative bg-green-600 hover:bg-green-700 text-white p-3 rounded-full transition duration-200"
                   >
                     <ShoppingCart className="w-6 h-6" />
@@ -252,16 +225,6 @@ function App() {
           </div>
         )}
       </main>
-
-      {showCart && !isAdmin && (
-        <ShoppingCartComponent
-          cart={cart}
-          onUpdateQuantity={handleUpdateQuantity}
-          onRemoveItem={handleRemoveItem}
-          onClose={() => setShowCart(false)}
-          onCheckout={handleCheckout}
-        />
-      )}
 
       {showAdminPanel && isAdmin && (
         <AdminPanel
