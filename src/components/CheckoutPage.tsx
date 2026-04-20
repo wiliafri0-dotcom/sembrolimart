@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import type { CartItem } from '../types/database';
 
 interface CheckoutPageProps {
@@ -24,7 +25,6 @@ export default function CheckoutPage({
   onBack,
 }: CheckoutPageProps) {
   const [shipping, setShipping] = useState<ShippingOption>('preorder');
-  const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('id-ID', {
@@ -65,122 +65,169 @@ export default function CheckoutPage({
   };
 
   const handlePrintReceipt = () => {
+    const doc = new jsPDF({ format: 'a5', unit: 'mm' });
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 12;
+    const contentW = pageW - margin * 2;
+    const green: [number, number, number] = [22, 163, 74];
+    const gray: [number, number, number] = [100, 100, 100];
+    const lightGray: [number, number, number] = [245, 245, 245];
+    const darkText: [number, number, number] = [26, 26, 26];
+
+    let y = margin;
+
+    doc.setFillColor(...green);
+    doc.rect(0, 0, pageW, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('SEMBROLI MART', pageW / 2, y + 6, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y + 11, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('STRUK PESANAN', pageW / 2, y + 17, { align: 'center' });
+
+    y = 28;
+
     const orderDate = new Date().toLocaleDateString('id-ID', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
-    const orderTime = new Date().toLocaleTimeString('id-ID', {
-      hour: '2-digit', minute: '2-digit'
+    const orderTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    const drawInfoBox = (lx: number, ly: number, w: number, label: string, value: string) => {
+      doc.setFillColor(...lightGray);
+      doc.roundedRect(lx, ly, w, 14, 2, 2, 'F');
+      doc.setTextColor(...gray);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.text(label.toUpperCase(), lx + 3, ly + 5);
+      doc.setTextColor(...darkText);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      const lines = doc.splitTextToSize(value, w - 6);
+      doc.text(lines[0], lx + 3, ly + 10.5);
+    };
+
+    const halfW = (contentW - 3) / 2;
+    drawInfoBox(margin, y, halfW, 'Tanggal', orderDate);
+    drawInfoBox(margin + halfW + 3, y, halfW, 'Jam', orderTime);
+    y += 16;
+
+    drawInfoBox(margin, y, halfW, 'Nama Penerima', customerName);
+    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : 'Kirim Sekarang (+Rp5.000)';
+    drawInfoBox(margin + halfW + 3, y, halfW, 'Pengiriman', shippingShort);
+    y += 16;
+
+    doc.setFillColor(...lightGray);
+    doc.roundedRect(margin, y, contentW, 14, 2, 2, 'F');
+    doc.setTextColor(...gray);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.text('ALAMAT PENGIRIMAN', margin + 3, y + 5);
+    doc.setTextColor(...darkText);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    const addrLines = doc.splitTextToSize(customerAddress || '-', contentW - 6);
+    doc.text(addrLines[0], margin + 3, y + 10.5);
+    y += 16;
+
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + contentW, y);
+    y += 4;
+
+    const colName = margin;
+    const colQty = margin + contentW * 0.52;
+    const colPrice = margin + contentW * 0.68;
+    const colSubtotal = margin + contentW;
+
+    doc.setTextColor(...gray);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text('PRODUK', colName, y);
+    doc.text('QTY', colQty, y, { align: 'center' });
+    doc.text('HARGA', colPrice, y, { align: 'right' });
+    doc.text('SUBTOTAL', colSubtotal, y, { align: 'right' });
+    y += 2;
+
+    doc.setDrawColor(...green);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, margin + contentW, y);
+    y += 4;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+
+    cart.forEach((item) => {
+      doc.setTextColor(...darkText);
+      const nameLines = doc.splitTextToSize(`${item.name}`, contentW * 0.5);
+      doc.text(nameLines[0], colName, y);
+      doc.setTextColor(...gray);
+      doc.text(String(item.quantity), colQty, y, { align: 'center' });
+      doc.text(formatPrice(item.price), colPrice, y, { align: 'right' });
+      doc.setTextColor(...darkText);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatPrice(item.price * item.quantity), colSubtotal, y, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.setDrawColor(240, 240, 240);
+      doc.setLineWidth(0.2);
+      y += 5.5;
+      doc.line(margin, y - 1, margin + contentW, y - 1);
     });
 
-    const itemRows = cart.map((item, i) => `
-      <tr>
-        <td style="padding:4px 0;border-bottom:1px solid #f0f0f0;">${i + 1}. ${item.name}</td>
-        <td style="padding:4px 0;border-bottom:1px solid #f0f0f0;text-align:center;">${item.quantity}</td>
-        <td style="padding:4px 0;border-bottom:1px solid #f0f0f0;text-align:right;">${formatPrice(item.price)}</td>
-        <td style="padding:4px 0;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600;">${formatPrice(item.price * item.quantity)}</td>
-      </tr>
-    `).join('');
+    y += 2;
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + contentW, y);
+    y += 5;
 
-    const receiptHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Struk Pesanan - ${customerName}</title>
-        <style>
-          @page { size: A5; margin: 12mm; }
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: white; }
-          .header { text-align: center; border-bottom: 2px solid #16a34a; padding-bottom: 10px; margin-bottom: 12px; }
-          .store-name { font-size: 20px; font-weight: 800; color: #16a34a; letter-spacing: 1px; }
-          .store-sub { font-size: 10px; color: #666; margin-top: 2px; }
-          .receipt-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-top: 6px; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-          .info-box { background: #f8f8f8; border-radius: 6px; padding: 8px 10px; }
-          .info-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-          .info-value { font-size: 11px; font-weight: 600; color: #1a1a1a; word-break: break-word; }
-          .info-wide { grid-column: 1 / -1; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-          th { font-size: 9px; text-transform: uppercase; color: #888; padding: 6px 0; border-bottom: 2px solid #e5e5e5; text-align: left; }
-          th:nth-child(2) { text-align: center; }
-          th:nth-child(3), th:nth-child(4) { text-align: right; }
-          td { font-size: 10.5px; color: #333; vertical-align: top; }
-          .totals { border-top: 1px solid #e5e5e5; padding-top: 8px; }
-          .total-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 10.5px; color: #555; }
-          .total-final { display: flex; justify-content: space-between; padding: 6px 0 0; font-size: 14px; font-weight: 800; color: #16a34a; border-top: 2px solid #16a34a; margin-top: 4px; }
-          .shipping-badge { display: inline-block; background: ${shipping === 'preorder' ? '#dcfce7' : '#fff7ed'}; color: ${shipping === 'preorder' ? '#166534' : '#c2410c'}; border-radius: 4px; padding: 2px 7px; font-size: 9.5px; font-weight: 700; margin-top: 3px; }
-          .footer { text-align: center; margin-top: 14px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 9.5px; color: #888; line-height: 1.6; }
-          .footer strong { color: #16a34a; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="store-name">SEMBROLI MART</div>
-          <div class="store-sub">Toko Sembako & Kebutuhan Sehari-hari</div>
-          <div class="receipt-title">STRUK PESANAN</div>
-        </div>
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...gray);
+    doc.text('Subtotal Produk', margin, y);
+    doc.text(formatPrice(subtotal), margin + contentW, y, { align: 'right' });
+    y += 5;
 
-        <div class="info-grid">
-          <div class="info-box">
-            <div class="info-label">Tanggal</div>
-            <div class="info-value">${orderDate}</div>
-          </div>
-          <div class="info-box">
-            <div class="info-label">Jam</div>
-            <div class="info-value">${orderTime}</div>
-          </div>
-          <div class="info-box">
-            <div class="info-label">Nama Penerima</div>
-            <div class="info-value">${customerName}</div>
-          </div>
-          <div class="info-box">
-            <div class="info-label">Pengiriman</div>
-            <div class="info-value">
-              <span class="shipping-badge">${shipping === 'preorder' ? 'Pre-Order' : 'Kirim Sekarang'}</span>
-            </div>
-          </div>
-          <div class="info-box info-wide">
-            <div class="info-label">Alamat Pengiriman</div>
-            <div class="info-value">${customerAddress}</div>
-          </div>
-        </div>
+    doc.text('Ongkir', margin, y);
+    doc.text(shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee), margin + contentW, y, { align: 'right' });
+    y += 5;
 
-        <table>
-          <thead>
-            <tr>
-              <th>Produk</th>
-              <th style="text-align:center">Qty</th>
-              <th style="text-align:right">Harga</th>
-              <th style="text-align:right">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>${itemRows}</tbody>
-        </table>
+    doc.setDrawColor(...green);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, margin + contentW, y);
+    y += 5;
 
-        <div class="totals">
-          <div class="total-row"><span>Subtotal Produk</span><span>${formatPrice(subtotal)}</span></div>
-          <div class="total-row"><span>Ongkir</span><span>${shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee)}</span></div>
-          <div class="total-final"><span>TOTAL</span><span>${formatPrice(total)}</span></div>
-        </div>
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...darkText);
+    doc.text('TOTAL', margin, y);
+    doc.setTextColor(...green);
+    doc.text(formatPrice(total), margin + contentW, y, { align: 'right' });
+    y += 8;
 
-        <div class="footer">
-          <strong>Terima kasih telah berbelanja di SEMBROLI MART!</strong><br>
-          Pesanan akan segera diproses dan dikirimkan.<br>
-          Hubungi kami via WhatsApp untuk konfirmasi.
-        </div>
-      </body>
-      </html>
-    `;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.setLineDashPattern([1.5, 1.5], 0);
+    doc.line(margin, y, margin + contentW, y);
+    doc.setLineDashPattern([], 0);
+    y += 6;
 
-    const printWindow = window.open('', '_blank', 'width=600,height=800');
-    if (printWindow) {
-      printWindow.document.write(receiptHTML);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 300);
-    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...green);
+    doc.text('Terima kasih telah berbelanja di SEMBROLI MART!', pageW / 2, y, { align: 'center' });
+    y += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.setFontSize(7);
+    doc.text('Pesanan akan segera diproses dan dikirimkan.', pageW / 2, y, { align: 'center' });
+    y += 4;
+    doc.text('Hubungi kami via WhatsApp untuk konfirmasi.', pageW / 2, y, { align: 'center' });
+
+    doc.save(`Struk_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`);
   };
 
   return (
@@ -197,7 +244,7 @@ export default function CheckoutPage({
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5" ref={receiptRef}>
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
         {/* Order Summary */}
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
