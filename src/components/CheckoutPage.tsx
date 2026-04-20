@@ -38,7 +38,7 @@ export default function CheckoutPage({
 
   const handleSendWhatsApp = () => {
     if (!address.trim()) {
-      setAddressError('Mohon isi nomor blok/rumah terlebih dahulu');
+      setAddressError('Mohon isi alamat lengkap terlebih dahulu');
       return;
     }
     setAddressError('');
@@ -165,7 +165,7 @@ export default function CheckoutPage({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                No. Blok / Rumah <span className="text-red-500">*</span>
+                Alamat Lengkap <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -174,7 +174,7 @@ export default function CheckoutPage({
                   setAddress(e.target.value);
                   if (e.target.value.trim()) setAddressError('');
                 }}
-                placeholder="cth: Blok B2 No.5"
+                placeholder="cth: Blok B2 No.5, RT 03/RW 07"
                 className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm transition ${
                   addressError ? 'border-red-400 bg-red-50' : 'border-gray-300'
                 }`}
