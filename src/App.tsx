@@ -111,6 +111,7 @@ function App() {
       <CheckoutPage
         cart={cart}
         customerName={customerInfo?.name ?? ''}
+        customerAddress={customerInfo?.address ?? ''}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onBack={() => setShowCheckout(false)}
