@@ -227,7 +227,14 @@ export default function CheckoutPage({
     y += 4;
     doc.text('Hubungi kami via WhatsApp untuk konfirmasi.', pageW / 2, y, { align: 'center' });
 
-    doc.save(`Struk_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`);
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    const printWindow = window.open(pdfUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   };
 
   return (
