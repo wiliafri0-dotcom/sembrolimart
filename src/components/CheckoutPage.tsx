@@ -70,14 +70,14 @@ export default function CheckoutPage({
     const pageW = doc.internal.pageSize.getWidth();
     const margin = 12;
     const contentW = pageW - margin * 2;
-    const green: [number, number, number] = [22, 163, 74];
-    const gray: [number, number, number] = [100, 100, 100];
-    const lightGray: [number, number, number] = [245, 245, 245];
-    const darkText: [number, number, number] = [26, 26, 26];
+    const darkGray: [number, number, number] = [60, 60, 60];
+    const mediumGray: [number, number, number] = [100, 100, 100];
+    const lightGray: [number, number, number] = [240, 240, 240];
+    const darkText: [number, number, number] = [0, 0, 0];
 
     let y = margin;
 
-    doc.setFillColor(...green);
+    doc.setFillColor(0, 0, 0);
     doc.rect(0, 0, pageW, 22, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
@@ -99,8 +99,10 @@ export default function CheckoutPage({
 
     const drawInfoBox = (lx: number, ly: number, w: number, label: string, value: string) => {
       doc.setFillColor(...lightGray);
-      doc.roundedRect(lx, ly, w, 14, 2, 2, 'F');
-      doc.setTextColor(...gray);
+      doc.setDrawColor(...mediumGray);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(lx, ly, w, 14, 2, 2, 'FD');
+      doc.setTextColor(...mediumGray);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.text(label.toUpperCase(), lx + 3, ly + 5);
@@ -122,8 +124,10 @@ export default function CheckoutPage({
     y += 16;
 
     doc.setFillColor(...lightGray);
-    doc.roundedRect(margin, y, contentW, 14, 2, 2, 'F');
-    doc.setTextColor(...gray);
+    doc.setDrawColor(...mediumGray);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, contentW, 14, 2, 2, 'FD');
+    doc.setTextColor(...mediumGray);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.text('ALAMAT PENGIRIMAN', margin + 3, y + 5);
@@ -144,7 +148,7 @@ export default function CheckoutPage({
     const colPrice = margin + contentW * 0.68;
     const colSubtotal = margin + contentW;
 
-    doc.setTextColor(...gray);
+    doc.setTextColor(...mediumGray);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.text('PRODUK', colName, y);
@@ -153,7 +157,7 @@ export default function CheckoutPage({
     doc.text('SUBTOTAL', colSubtotal, y, { align: 'right' });
     y += 2;
 
-    doc.setDrawColor(...green);
+    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.5);
     doc.line(margin, y, margin + contentW, y);
     y += 4;
@@ -165,28 +169,28 @@ export default function CheckoutPage({
       doc.setTextColor(...darkText);
       const nameLines = doc.splitTextToSize(`${item.name}`, contentW * 0.5);
       doc.text(nameLines[0], colName, y);
-      doc.setTextColor(...gray);
+      doc.setTextColor(...mediumGray);
       doc.text(String(item.quantity), colQty, y, { align: 'center' });
       doc.text(formatPrice(item.price), colPrice, y, { align: 'right' });
       doc.setTextColor(...darkText);
       doc.setFont('helvetica', 'bold');
       doc.text(formatPrice(item.price * item.quantity), colSubtotal, y, { align: 'right' });
       doc.setFont('helvetica', 'normal');
-      doc.setDrawColor(240, 240, 240);
+      doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(0.2);
       y += 5.5;
       doc.line(margin, y - 1, margin + contentW, y - 1);
     });
 
     y += 2;
-    doc.setDrawColor(220, 220, 220);
+    doc.setDrawColor(100, 100, 100);
     doc.setLineWidth(0.3);
     doc.line(margin, y, margin + contentW, y);
     y += 5;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(...gray);
+    doc.setTextColor(...mediumGray);
     doc.text('Subtotal Produk', margin, y);
     doc.text(formatPrice(subtotal), margin + contentW, y, { align: 'right' });
     y += 5;
@@ -195,7 +199,7 @@ export default function CheckoutPage({
     doc.text(shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee), margin + contentW, y, { align: 'right' });
     y += 5;
 
-    doc.setDrawColor(...green);
+    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.5);
     doc.line(margin, y, margin + contentW, y);
     y += 5;
@@ -204,11 +208,10 @@ export default function CheckoutPage({
     doc.setFontSize(11);
     doc.setTextColor(...darkText);
     doc.text('TOTAL', margin, y);
-    doc.setTextColor(...green);
     doc.text(formatPrice(total), margin + contentW, y, { align: 'right' });
     y += 8;
 
-    doc.setDrawColor(200, 200, 200);
+    doc.setDrawColor(150, 150, 150);
     doc.setLineWidth(0.3);
     doc.setLineDashPattern([1.5, 1.5], 0);
     doc.line(margin, y, margin + contentW, y);
@@ -217,11 +220,11 @@ export default function CheckoutPage({
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(...green);
+    doc.setTextColor(...darkText);
     doc.text('Terima kasih telah berbelanja di SEMBROLI MART!', pageW / 2, y, { align: 'center' });
     y += 4.5;
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...gray);
+    doc.setTextColor(...mediumGray);
     doc.setFontSize(7);
     doc.text('Pesanan akan segera diproses dan dikirimkan.', pageW / 2, y, { align: 'center' });
     y += 4;
