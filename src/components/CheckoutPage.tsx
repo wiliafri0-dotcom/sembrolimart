@@ -77,20 +77,18 @@ export default function CheckoutPage({
 
     let y = margin;
 
-    doc.setFillColor(0, 0, 0);
-    doc.rect(0, 0, pageW, 22, 'F');
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(...darkText);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text('SEMBROLI MART', pageW / 2, y + 6, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text('SEMBROLI MART', pageW / 2, y + 4, { align: 'center' });
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y + 11, { align: 'center' });
+    doc.setFontSize(7);
+    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y + 8, { align: 'center' });
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('STRUK PESANAN', pageW / 2, y + 17, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text('STRUK PESANAN', pageW / 2, y + 12, { align: 'center' });
 
-    y = 28;
+    y = 18;
 
     const orderDate = new Date().toLocaleDateString('id-ID', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -102,7 +100,7 @@ export default function CheckoutPage({
       doc.setDrawColor(...mediumGray);
       doc.setLineWidth(0.3);
       doc.roundedRect(lx, ly, w, 14, 2, 2, 'FD');
-      doc.setTextColor(...mediumGray);
+      doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.text(label.toUpperCase(), lx + 3, ly + 5);
@@ -127,7 +125,7 @@ export default function CheckoutPage({
     doc.setDrawColor(...mediumGray);
     doc.setLineWidth(0.3);
     doc.roundedRect(margin, y, contentW, 14, 2, 2, 'FD');
-    doc.setTextColor(...mediumGray);
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.text('ALAMAT PENGIRIMAN', margin + 3, y + 5);
