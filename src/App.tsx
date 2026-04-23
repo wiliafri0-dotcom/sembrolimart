@@ -105,6 +105,7 @@ function App() {
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (showCheckout && !isAdmin) {
     return (
@@ -155,12 +156,17 @@ function App() {
                 <>
                   <button
                     onClick={() => setShowCheckout(true)}
-                    className="relative bg-green-600 hover:bg-green-700 text-white p-3 rounded-full transition duration-200"
+                    className="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2"
                   >
-                    <ShoppingCart className="w-6 h-6" />
+                    <ShoppingCart className="w-5 h-5" />
                     {cartItemCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                      <span className="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                         {cartItemCount}
+                      </span>
+                    )}
+                    {cartTotal > 0 && (
+                      <span className="text-sm font-semibold">
+                        Rp{cartTotal.toLocaleString('id-ID')}
                       </span>
                     )}
                   </button>
