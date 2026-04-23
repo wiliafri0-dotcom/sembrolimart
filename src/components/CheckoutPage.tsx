@@ -65,168 +65,112 @@ export default function CheckoutPage({
   };
 
   const handlePrintReceipt = () => {
-    const doc = new jsPDF({ format: 'a5', unit: 'mm' });
+    const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
 
     const pageW = doc.internal.pageSize.getWidth();
-    const margin = 12;
+    const margin = 4;
     const contentW = pageW - margin * 2;
-    const darkGray: [number, number, number] = [60, 60, 60];
-    const mediumGray: [number, number, number] = [100, 100, 100];
-    const lightGray: [number, number, number] = [240, 240, 240];
-    const darkText: [number, number, number] = [0, 0, 0];
 
-    let y = margin;
+    let y = margin + 2;
 
-    doc.setTextColor(...darkText);
+    doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('SEMBROLI MART', pageW / 2, y + 4, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text('SEMBROLI MART', pageW / 2, y, { align: 'center' });
+    y += 4;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y + 8, { align: 'center' });
+    doc.setFontSize(5.5);
+    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y, { align: 'center' });
+    y += 3;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('STRUK PESANAN', pageW / 2, y + 12, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('STRUK PESANAN', pageW / 2, y, { align: 'center' });
+    y += 4;
 
-    y = 18;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + contentW, y);
+    y += 3;
 
     const orderDate = new Date().toLocaleDateString('id-ID', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      day: '2-digit', month: '2-digit', year: 'numeric',
     });
     const orderTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-    const drawInfoBox = (lx: number, ly: number, w: number, label: string, value: string) => {
-      doc.setFillColor(...lightGray);
-      doc.setDrawColor(...mediumGray);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(lx, ly, w, 14, 2, 2, 'FD');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text(label.toUpperCase(), lx + 3, ly + 5);
-      doc.setTextColor(...darkText);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      const lines = doc.splitTextToSize(value, w - 6);
-      doc.text(lines[0], lx + 3, ly + 10.5);
-    };
-
-    const halfW = (contentW - 3) / 2;
-    drawInfoBox(margin, y, halfW, 'Tanggal', orderDate);
-    drawInfoBox(margin + halfW + 3, y, halfW, 'Jam', orderTime);
-    y += 16;
-
-    drawInfoBox(margin, y, halfW, 'Nama Penerima', customerName);
-    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : 'Kirim Sekarang (+Rp5.000)';
-    drawInfoBox(margin + halfW + 3, y, halfW, 'Pengiriman', shippingShort);
-    y += 16;
-
-    doc.setFillColor(...lightGray);
-    doc.setDrawColor(...mediumGray);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(margin, y, contentW, 14, 2, 2, 'FD');
-    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.5);
-    doc.text('ALAMAT PENGIRIMAN', margin + 3, y + 5);
-    doc.setTextColor(...darkText);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    const addrLines = doc.splitTextToSize(customerAddress || '-', contentW - 6);
-    doc.text(addrLines[0], margin + 3, y + 10.5);
-    y += 16;
+    doc.setFontSize(5.5);
+    doc.text(`Tanggal : ${orderDate}`, margin, y);
+    y += 3;
+    doc.text(`Jam     : ${orderTime}`, margin, y);
+    y += 3;
+    doc.text(`Nama    : ${customerName}`, margin, y);
+    y += 3;
+    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : 'Kirim Skrg (+Rp5.000)';
+    doc.text(`Kirim   : ${shippingShort}`, margin, y);
+    y += 3;
+    const addrLines = doc.splitTextToSize(`Alamat  : ${customerAddress || '-'}`, contentW);
+    doc.text(addrLines, margin, y);
+    y += addrLines.length * 2.5 + 2;
 
-    doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.3);
     doc.line(margin, y, margin + contentW, y);
-    y += 4;
-
-    const colName = margin;
-    const colQty = margin + contentW * 0.52;
-    const colPrice = margin + contentW * 0.68;
-    const colSubtotal = margin + contentW;
-
-    doc.setTextColor(...mediumGray);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text('PRODUK', colName, y);
-    doc.text('QTY', colQty, y, { align: 'center' });
-    doc.text('HARGA', colPrice, y, { align: 'right' });
-    doc.text('SUBTOTAL', colSubtotal, y, { align: 'right' });
-    y += 2;
-
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, margin + contentW, y);
-    y += 4;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    y += 3;
 
     cart.forEach((item) => {
-      doc.setTextColor(...darkText);
-      const nameLines = doc.splitTextToSize(`${item.name}`, contentW * 0.5);
-      doc.text(nameLines[0], colName, y);
-      doc.setTextColor(...mediumGray);
-      doc.text(String(item.quantity), colQty, y, { align: 'center' });
-      doc.text(formatPrice(item.price), colPrice, y, { align: 'right' });
-      doc.setTextColor(...darkText);
       doc.setFont('helvetica', 'bold');
-      doc.text(formatPrice(item.price * item.quantity), colSubtotal, y, { align: 'right' });
+      doc.setFontSize(6);
+      const nameLines = doc.splitTextToSize(item.name, contentW);
+      doc.text(nameLines, margin, y);
+      y += nameLines.length * 2.5;
+
       doc.setFont('helvetica', 'normal');
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.2);
-      y += 5.5;
-      doc.line(margin, y - 1, margin + contentW, y - 1);
+      doc.setFontSize(5.5);
+      doc.text(`${item.quantity} x ${formatPrice(item.price)}`, margin, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatPrice(item.price * item.quantity), margin + contentW, y, { align: 'right' });
+      y += 3.5;
     });
 
-    y += 2;
-    doc.setDrawColor(100, 100, 100);
     doc.setLineWidth(0.3);
     doc.line(margin, y, margin + contentW, y);
-    y += 5;
+    y += 3;
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...mediumGray);
-    doc.text('Subtotal Produk', margin, y);
+    doc.setFontSize(5.5);
+    doc.text('Subtotal', margin, y);
     doc.text(formatPrice(subtotal), margin + contentW, y, { align: 'right' });
-    y += 5;
-
+    y += 3;
     doc.text('Ongkir', margin, y);
     doc.text(shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee), margin + contentW, y, { align: 'right' });
-    y += 5;
+    y += 3;
 
-    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.5);
     doc.line(margin, y, margin + contentW, y);
-    y += 5;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...darkText);
-    doc.text('TOTAL', margin, y);
-    doc.text(formatPrice(total), margin + contentW, y, { align: 'right' });
-    y += 8;
-
-    doc.setDrawColor(150, 150, 150);
-    doc.setLineWidth(0.3);
-    doc.setLineDashPattern([1.5, 1.5], 0);
-    doc.line(margin, y, margin + contentW, y);
-    doc.setLineDashPattern([], 0);
-    y += 6;
+    y += 3.5;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(...darkText);
-    doc.text('Terima kasih telah berbelanja di SEMBROLI MART!', pageW / 2, y, { align: 'center' });
-    y += 4.5;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...mediumGray);
-    doc.setFontSize(7);
-    doc.text('Pesanan akan segera diproses dan dikirimkan.', pageW / 2, y, { align: 'center' });
+    doc.text('TOTAL', margin, y);
+    doc.text(formatPrice(total), margin + contentW, y, { align: 'right' });
+    y += 5;
+
+    doc.setLineWidth(0.3);
+    doc.setLineDashPattern([1, 1], 0);
+    doc.line(margin, y, margin + contentW, y);
+    doc.setLineDashPattern([], 0);
     y += 4;
-    doc.text('Hubungi kami via WhatsApp untuk konfirmasi.', pageW / 2, y, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.text('Terima kasih telah berbelanja', pageW / 2, y, { align: 'center' });
+    y += 2.5;
+    doc.text('di SEMBROLI MART!', pageW / 2, y, { align: 'center' });
+    y += 3;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5);
+    doc.text('Pesanan akan segera diproses.', pageW / 2, y, { align: 'center' });
+    y += 2.5;
+    doc.text('Hubungi kami via WhatsApp.', pageW / 2, y, { align: 'center' });
 
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
