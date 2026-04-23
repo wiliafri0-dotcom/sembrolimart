@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, FileText } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import type { CartItem } from '../types/database';
 
@@ -25,6 +25,7 @@ export default function CheckoutPage({
   onBack,
 }: CheckoutPageProps) {
   const [shipping, setShipping] = useState<ShippingOption>('preorder');
+  const [orderLocked, setOrderLocked] = useState(false);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('id-ID', {
@@ -42,7 +43,7 @@ export default function CheckoutPage({
       ? 'Pre-Order – Antar Besok Pagi Jam 07.30 (Gratis Ongkir)'
       : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
 
-  const handleSendWhatsApp = () => {
+  const buildOrderMessage = () => {
     let message = `Halo, saya ingin memesan:\n\n`;
     message += `*Nama:* ${customerName}\n`;
     message += `*Alamat:* ${customerAddress}\n`;
@@ -59,12 +60,16 @@ export default function CheckoutPage({
     }
     message += `\n*Total:* ${formatPrice(total)}`;
     message += `\n\nTerima kasih!`;
-
-    const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
+    return message;
   };
 
-  const handlePrintReceipt = () => {
+  const handleSendWhatsApp = () => {
+    const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(buildOrderMessage())}`;
+    window.open(url, '_blank');
+    setOrderLocked(true);
+  };
+
+  const handleSendReceiptWhatsApp = () => {
     const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
 
     const pageW = doc.internal.pageSize.getWidth();
@@ -180,6 +185,11 @@ export default function CheckoutPage({
         printWindow.print();
       };
     }
+
+    const receiptText = buildOrderMessage();
+    const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(receiptText)}`;
+    window.open(url, '_blank');
+    setOrderLocked(true);
   };
 
   return (
@@ -197,6 +207,17 @@ export default function CheckoutPage({
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+
+        {/* Locked Banner */}
+        {orderLocked && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 flex items-center gap-3">
+            <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-amber-800 text-sm">Pesanan Terkunci</p>
+              <p className="text-amber-600 text-xs">Pesanan sudah dikirim. Detail tidak dapat diubah.</p>
+            </div>
+          </div>
+        )}
 
         {/* Order Summary */}
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -223,33 +244,41 @@ export default function CheckoutPage({
                     <p className="text-sm text-green-600 font-medium mt-0.5">
                       {formatPrice(item.price)}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-8 text-center font-semibold text-sm">{item.quantity}</span>
-                      <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                        className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
+                    {orderLocked ? (
+                      <p className="mt-2 text-sm font-semibold text-gray-700">
+                        x{item.quantity}
+                      </p>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                          className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-8 text-center font-semibold text-sm">{item.quantity}</span>
+                        <button
+                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                          className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="font-bold text-gray-800 text-sm">
                       {formatPrice(item.price * item.quantity)}
                     </p>
-                    <button
-                      onClick={() => onRemoveItem(item.id)}
-                      className="mt-2 text-red-400 hover:text-red-600 transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {!orderLocked && (
+                      <button
+                        onClick={() => onRemoveItem(item.id)}
+                        className="mt-2 text-red-400 hover:text-red-600 transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -292,7 +321,9 @@ export default function CheckoutPage({
               </label>
               <div className="space-y-2.5">
                 <label
-                  className={`flex items-start gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition ${
+                  className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
+                    orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
+                  } ${
                     shipping === 'preorder'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
@@ -304,6 +335,7 @@ export default function CheckoutPage({
                     value="preorder"
                     checked={shipping === 'preorder'}
                     onChange={() => setShipping('preorder')}
+                    disabled={orderLocked}
                     className="mt-0.5 accent-green-600"
                   />
                   <div className="flex-1">
@@ -319,7 +351,9 @@ export default function CheckoutPage({
                 </label>
 
                 <label
-                  className={`flex items-start gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition ${
+                  className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
+                    orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
+                  } ${
                     shipping === 'instant'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
@@ -331,6 +365,7 @@ export default function CheckoutPage({
                     value="instant"
                     checked={shipping === 'instant'}
                     onChange={() => setShipping('instant')}
+                    disabled={orderLocked}
                     className="mt-0.5 accent-green-600"
                   />
                   <div className="flex-1">
@@ -369,27 +404,47 @@ export default function CheckoutPage({
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <button
-            onClick={handleSendWhatsApp}
-            disabled={cart.length === 0}
-            className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-3 text-base active:scale-[0.98]"
-          >
-            <MessageCircle className="w-6 h-6" />
-            Kirim Pesanan via WhatsApp
-          </button>
+          {!orderLocked ? (
+            <>
+              <button
+                onClick={handleSendWhatsApp}
+                disabled={cart.length === 0}
+                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-3 text-base active:scale-[0.98]"
+              >
+                <MessageCircle className="w-6 h-6" />
+                Kirim Pesanan via WhatsApp
+              </button>
 
-          <button
-            onClick={handlePrintReceipt}
-            disabled={cart.length === 0}
-            className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 font-semibold py-3.5 rounded-xl border border-gray-300 shadow-sm transition duration-200 flex items-center justify-center gap-2.5 text-sm active:scale-[0.98]"
-          >
-            <Printer className="w-5 h-5 text-gray-500" />
-            Cetak Struk (A5)
-          </button>
+              <button
+                onClick={handleSendReceiptWhatsApp}
+                disabled={cart.length === 0}
+                className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 font-semibold py-3.5 rounded-xl border border-gray-300 shadow-sm transition duration-200 flex items-center justify-center gap-2.5 text-sm active:scale-[0.98]"
+              >
+                <FileText className="w-5 h-5 text-gray-500" />
+                Cetak Struk & Kirim via WhatsApp
+              </button>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div className="w-full bg-gray-100 text-gray-400 font-bold py-4 rounded-xl flex items-center justify-center gap-3 text-base">
+                <Lock className="w-5 h-5" />
+                Pesanan Sudah Dikirim
+              </div>
+              <button
+                onClick={handleSendReceiptWhatsApp}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3.5 rounded-xl border border-gray-300 shadow-sm transition duration-200 flex items-center justify-center gap-2.5 text-sm active:scale-[0.98]"
+              >
+                <Printer className="w-5 h-5 text-gray-500" />
+                Cetak Ulang Struk
+              </button>
+            </div>
+          )}
         </div>
 
         <p className="text-center text-xs text-gray-400 pb-4">
-          Pesanan akan dikirim ke WhatsApp admin untuk dikonfirmasi
+          {orderLocked
+            ? 'Pesanan terkunci. Hubungi admin untuk perubahan.'
+            : 'Pesanan akan dikirim ke WhatsApp admin untuk dikonfirmasi'}
         </p>
       </div>
     </div>
