@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, FileText } from 'lucide-react';
-import { jsPDF } from 'jspdf';
+import { useState, useRef, useCallback } from 'react';
+import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, Image, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import type { CartItem } from '../types/database';
 
 interface CheckoutPageProps {
@@ -26,6 +26,9 @@ export default function CheckoutPage({
 }: CheckoutPageProps) {
   const [shipping, setShipping] = useState<ShippingOption>('preorder');
   const [orderLocked, setOrderLocked] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('id-ID', {
@@ -43,7 +46,83 @@ export default function CheckoutPage({
       ? 'Pre-Order – Antar Besok Pagi Jam 07.30 (Gratis Ongkir)'
       : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
 
-  const buildOrderMessage = () => {
+  const orderDate = new Date().toLocaleDateString('id-ID', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+  });
+  const orderTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+  const saveOrderToDB = async (): Promise<string | null> => {
+    const orderItems = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        customer_name: customerName,
+        customer_address: customerAddress,
+        shipping_type: shipping,
+        items: orderItems,
+        subtotal,
+        shipping_fee: shippingFee,
+        total,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error saving order:', error);
+      return null;
+    }
+    return data?.id ?? null;
+  };
+
+  const captureReceiptImage = useCallback(async (): Promise<Blob | null> => {
+    if (!receiptRef.current) return null;
+
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 3,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      });
+
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+      });
+    } catch (err) {
+      console.error('Error capturing receipt:', err);
+      return null;
+    }
+  }, []);
+
+  const uploadReceiptImage = async (blob: Blob, id: string): Promise<string | null> => {
+    const fileName = `receipt-${id}-${Date.now()}.png`;
+    const { data, error } = await supabase.storage
+      .from('images')
+      .upload(`receipts/${fileName}`, blob, {
+        contentType: 'image/png',
+        upsert: true,
+      });
+
+    if (error) {
+      console.error('Error uploading receipt:', error);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(`receipts/${fileName}`);
+
+    return urlData.publicUrl;
+  };
+
+  const buildOrderMessage = (receiptUrl?: string) => {
     let message = `Halo, saya ingin memesan:\n\n`;
     message += `*Nama:* ${customerName}\n`;
     message += `*Alamat:* ${customerAddress}\n`;
@@ -59,137 +138,63 @@ export default function CheckoutPage({
       message += `\n*Ongkir:* ${formatPrice(shippingFee)}`;
     }
     message += `\n*Total:* ${formatPrice(total)}`;
+
+    if (receiptUrl) {
+      message += `\n\n*Struk Pesanan:* ${receiptUrl}`;
+    }
+
     message += `\n\nTerima kasih!`;
     return message;
   };
 
-  const handleSendWhatsApp = () => {
-    const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(buildOrderMessage())}`;
-    window.open(url, '_blank');
-    setOrderLocked(true);
+  const handleSendWhatsApp = async () => {
+    setSending(true);
+    try {
+      const id = await saveOrderToDB();
+      if (id) setOrderId(id);
+
+      const message = buildOrderMessage();
+      const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      setOrderLocked(true);
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleSendReceiptWhatsApp = () => {
-    const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
+  const handleSendReceiptWhatsApp = async () => {
+    setSending(true);
+    try {
+      const id = await saveOrderToDB();
+      if (id) setOrderId(id);
 
-    const pageW = doc.internal.pageSize.getWidth();
-    const margin = 4;
-    const contentW = pageW - margin * 2;
+      const imageBlob = await captureReceiptImage();
+      let receiptUrl: string | undefined;
 
-    let y = margin + 2;
+      if (imageBlob && id) {
+        receiptUrl = await uploadReceiptImage(imageBlob, id) ?? undefined;
+      }
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('SEMBROLI MART', pageW / 2, y, { align: 'center' });
-    y += 4;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y, { align: 'center' });
-    y += 3;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6);
-    doc.text('STRUK PESANAN', pageW / 2, y, { align: 'center' });
-    y += 4;
+      const message = buildOrderMessage(receiptUrl);
+      const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      setOrderLocked(true);
+    } finally {
+      setSending(false);
+    }
+  };
 
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    doc.line(margin, y, margin + contentW, y);
-    y += 3;
+  const handlePrintReceipt = async () => {
+    const imageBlob = await captureReceiptImage();
+    if (!imageBlob) return;
 
-    const orderDate = new Date().toLocaleDateString('id-ID', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    });
-    const orderTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.text(`Tanggal : ${orderDate}`, margin, y);
-    y += 3;
-    doc.text(`Jam     : ${orderTime}`, margin, y);
-    y += 3;
-    doc.text(`Nama    : ${customerName}`, margin, y);
-    y += 3;
-    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : 'Kirim Skrg (+Rp5.000)';
-    doc.text(`Kirim   : ${shippingShort}`, margin, y);
-    y += 3;
-    const addrLines = doc.splitTextToSize(`Alamat  : ${customerAddress || '-'}`, contentW);
-    doc.text(addrLines, margin, y);
-    y += addrLines.length * 2.5 + 2;
-
-    doc.setLineWidth(0.3);
-    doc.line(margin, y, margin + contentW, y);
-    y += 3;
-
-    cart.forEach((item) => {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
-      const nameLines = doc.splitTextToSize(item.name, contentW);
-      doc.text(nameLines, margin, y);
-      y += nameLines.length * 2.5;
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5.5);
-      doc.text(`${item.quantity} x ${formatPrice(item.price)}`, margin, y);
-      doc.setFont('helvetica', 'bold');
-      doc.text(formatPrice(item.price * item.quantity), margin + contentW, y, { align: 'right' });
-      y += 3.5;
-    });
-
-    doc.setLineWidth(0.3);
-    doc.line(margin, y, margin + contentW, y);
-    y += 3;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.text('Subtotal', margin, y);
-    doc.text(formatPrice(subtotal), margin + contentW, y, { align: 'right' });
-    y += 3;
-    doc.text('Ongkir', margin, y);
-    doc.text(shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee), margin + contentW, y, { align: 'right' });
-    y += 3;
-
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, margin + contentW, y);
-    y += 3.5;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('TOTAL', margin, y);
-    doc.text(formatPrice(total), margin + contentW, y, { align: 'right' });
-    y += 5;
-
-    doc.setLineWidth(0.3);
-    doc.setLineDashPattern([1, 1], 0);
-    doc.line(margin, y, margin + contentW, y);
-    doc.setLineDashPattern([], 0);
-    y += 4;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.text('Terima kasih telah berbelanja', pageW / 2, y, { align: 'center' });
-    y += 2.5;
-    doc.text('di SEMBROLI MART!', pageW / 2, y, { align: 'center' });
-    y += 3;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5);
-    doc.text('Pesanan akan segera diproses.', pageW / 2, y, { align: 'center' });
-    y += 2.5;
-    doc.text('Hubungi kami via WhatsApp.', pageW / 2, y, { align: 'center' });
-
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    const printWindow = window.open(pdfUrl, '_blank');
+    const imageUrl = URL.createObjectURL(imageBlob);
+    const printWindow = window.open(imageUrl, '_blank');
     if (printWindow) {
       printWindow.onload = () => {
         printWindow.print();
       };
     }
-
-    const receiptText = buildOrderMessage();
-    const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(receiptText)}`;
-    window.open(url, '_blank');
-    setOrderLocked(true);
   };
 
   return (
@@ -214,7 +219,7 @@ export default function CheckoutPage({
             <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
             <div>
               <p className="font-semibold text-amber-800 text-sm">Pesanan Terkunci</p>
-              <p className="text-amber-600 text-xs">Pesanan sudah dikirim. Detail tidak dapat diubah.</p>
+              <p className="text-amber-600 text-xs">Pesanan sudah dikirim dan tersimpan. Detail tidak dapat diubah.</p>
             </div>
           </div>
         )}
@@ -408,20 +413,20 @@ export default function CheckoutPage({
             <>
               <button
                 onClick={handleSendWhatsApp}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || sending}
                 className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-3 text-base active:scale-[0.98]"
               >
-                <MessageCircle className="w-6 h-6" />
-                Kirim Pesanan via WhatsApp
+                {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-6 h-6" />}
+                {sending ? 'Menyimpan Pesanan...' : 'Kirim Pesanan via WhatsApp'}
               </button>
 
               <button
                 onClick={handleSendReceiptWhatsApp}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || sending}
                 className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 font-semibold py-3.5 rounded-xl border border-gray-300 shadow-sm transition duration-200 flex items-center justify-center gap-2.5 text-sm active:scale-[0.98]"
               >
-                <FileText className="w-5 h-5 text-gray-500" />
-                Cetak Struk & Kirim via WhatsApp
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-5 h-5 text-green-600" />}
+                {sending ? 'Memproses Struk...' : 'Kirim Struk via WhatsApp'}
               </button>
             </>
           ) : (
@@ -431,7 +436,7 @@ export default function CheckoutPage({
                 Pesanan Sudah Dikirim
               </div>
               <button
-                onClick={handleSendReceiptWhatsApp}
+                onClick={handlePrintReceipt}
                 className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3.5 rounded-xl border border-gray-300 shadow-sm transition duration-200 flex items-center justify-center gap-2.5 text-sm active:scale-[0.98]"
               >
                 <Printer className="w-5 h-5 text-gray-500" />
@@ -443,9 +448,80 @@ export default function CheckoutPage({
 
         <p className="text-center text-xs text-gray-400 pb-4">
           {orderLocked
-            ? 'Pesanan terkunci. Hubungi admin untuk perubahan.'
+            ? 'Pesanan terkunci & tersimpan. Hubungi admin untuk perubahan.'
             : 'Pesanan akan dikirim ke WhatsApp admin untuk dikonfirmasi'}
         </p>
+      </div>
+
+      {/* Hidden Receipt for Image Capture */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div
+          ref={receiptRef}
+          style={{
+            width: '320px',
+            padding: '24px 16px',
+            backgroundColor: '#ffffff',
+            fontFamily: 'monospace, Courier New, Courier',
+            color: '#000000',
+            fontSize: '13px',
+            lineHeight: '1.5',
+          }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '18px', letterSpacing: '1px' }}>SEMBROLI MART</div>
+            <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Toko Sembako & Kebutuhan Sehari-hari</div>
+            <div style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '6px', letterSpacing: '0.5px' }}>STRUK PESANAN</div>
+          </div>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }} />
+
+          <div style={{ fontSize: '12px' }}>
+            <div>Tanggal : {orderDate}</div>
+            <div>Jam     : {orderTime}</div>
+            <div>Nama    : {customerName}</div>
+            <div>Kirim   : {shipping === 'preorder' ? 'Pre-Order (Gratis)' : 'Kirim Skrg (+Rp5.000)'}</div>
+            <div style={{ wordBreak: 'break-word' }}>Alamat  : {customerAddress || '-'}</div>
+          </div>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '10px 0' }} />
+
+          {cart.map((item, i) => (
+            <div key={item.id} style={{ marginBottom: '8px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{item.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                <span>{item.quantity} x {formatPrice(item.price)}</span>
+                <span style={{ fontWeight: 'bold' }}>{formatPrice(item.price * item.quantity)}</span>
+              </div>
+            </div>
+          ))}
+
+          <div style={{ borderTop: '1px dashed #000', margin: '10px 0' }} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+            <span>Subtotal</span>
+            <span>{formatPrice(subtotal)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+            <span>Ongkir</span>
+            <span>{shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee)}</span>
+          </div>
+
+          <div style={{ borderTop: '2px solid #000', margin: '8px 0' }} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
+            <span>TOTAL</span>
+            <span>{formatPrice(total)}</span>
+          </div>
+
+          <div style={{ borderTop: '1px dashed #999', margin: '12px 0' }} />
+
+          <div style={{ textAlign: 'center', fontSize: '11px', color: '#444' }}>
+            <div style={{ fontWeight: 'bold' }}>Terima kasih telah berbelanja</div>
+            <div style={{ fontWeight: 'bold' }}>di SEMBROLI MART!</div>
+            <div style={{ marginTop: '4px' }}>Pesanan akan segera diproses.</div>
+            <div>Hubungi kami via WhatsApp.</div>
+          </div>
+        </div>
       </div>
     </div>
   );
