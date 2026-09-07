@@ -568,14 +568,7 @@ export default function CheckoutPage({
                 Kirim Pesanan via WhatsApp
               </button>
 
-              <button
-                onClick={handleSendReceiptWhatsApp}
-                disabled={cart.length === 0}
-                className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 font-semibold py-3.5 rounded-xl border border-gray-300 shadow-sm transition duration-200 flex items-center justify-center gap-2.5 text-sm active:scale-[0.98]"
-              >
-                <FileText className="w-5 h-5 text-gray-500" />
-                Cetak Struk & Kirim via WhatsApp
-              </button>
+
             </>
           ) : (
             <div className="space-y-3">
