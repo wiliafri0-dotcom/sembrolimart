@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import type { CartItem } from '../types/database';
+import { supabase } from '../lib/supabase';
+import type { CartItem, ShippingAddress } from '../types/database';
 
 interface CheckoutPageProps {
   cart: CartItem[];
@@ -26,6 +27,35 @@ export default function CheckoutPage({
 }: CheckoutPageProps) {
   const [shipping, setShipping] = useState<ShippingOption>('preorder');
   const [orderLocked, setOrderLocked] = useState(false);
+  const [addresses, setAddresses] = useState<ShippingAddress[]>([]);
+  const [freeShippingEligible, setFreeShippingEligible] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const fetchAddresses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('shipping_addresses')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAddresses(data || []);
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (addresses.length === 0) return;
+    const matched = addresses.some((addr) =>
+      customerAddress.toLowerCase().startsWith(addr.name.toLowerCase())
+    );
+    setFreeShippingEligible(matched);
+  }, [addresses, customerAddress]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('id-ID', {
@@ -35,13 +65,16 @@ export default function CheckoutPage({
     }).format(price);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingFee = shipping === 'instant' ? 5000 : 0;
+  const qualifiesForFree = freeShippingEligible === true;
+  const shippingFee = shipping === 'instant' ? (qualifiesForFree ? 0 : 5000) : 0;
   const total = subtotal + shippingFee;
 
   const shippingLabel =
     shipping === 'preorder'
       ? 'Pre-Order – Antar Besok Pagi Jam 07.30 (Gratis Ongkir)'
-      : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
+      : qualifiesForFree
+        ? 'Kirim Sekarang / Instan (Gratis Ongkir - Area Anda)'
+        : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
 
   const buildOrderMessage = () => {
     let message = `Halo, saya ingin memesan:\n\n`;
@@ -57,15 +90,46 @@ export default function CheckoutPage({
     message += `\n*Subtotal Produk:* ${formatPrice(subtotal)}`;
     if (shippingFee > 0) {
       message += `\n*Ongkir:* ${formatPrice(shippingFee)}`;
+    } else {
+      message += `\n*Ongkir:* Gratis`;
     }
     message += `\n*Total:* ${formatPrice(total)}`;
     message += `\n\nTerima kasih!`;
     return message;
   };
 
+  const saveOrder = async () => {
+    try {
+      const itemsSnapshot = cart.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image_url: item.image_url,
+      }));
+
+      await supabase.from('orders').insert({
+        customer_name: customerName,
+        customer_address: customerAddress,
+        shipping_type: shipping,
+        items: itemsSnapshot,
+        subtotal,
+        shipping_fee: shippingFee,
+        total,
+        status: 'sent',
+        order_source: 'online',
+        payment_method: '',
+        notes: '',
+      });
+    } catch (error) {
+      console.error('Error saving order:', error);
+    }
+  };
+
   const handleSendWhatsApp = () => {
     const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(buildOrderMessage())}`;
     window.open(url, '_blank');
+    saveOrder();
     setOrderLocked(true);
   };
 
@@ -110,7 +174,7 @@ export default function CheckoutPage({
     y += 3;
     doc.text(`Nama    : ${customerName}`, margin, y);
     y += 3;
-    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : 'Kirim Skrg (+Rp5.000)';
+    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : qualifiesForFree ? 'Kirim Skrg (Gratis)' : 'Kirim Skrg (+Rp5.000)';
     doc.text(`Kirim   : ${shippingShort}`, margin, y);
     y += 3;
     const addrLines = doc.splitTextToSize(`Alamat  : ${customerAddress || '-'}`, contentW);
@@ -189,6 +253,7 @@ export default function CheckoutPage({
     const receiptText = buildOrderMessage();
     const url = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(receiptText)}`;
     window.open(url, '_blank');
+    saveOrder();
     setOrderLocked(true);
   };
 
@@ -208,7 +273,6 @@ export default function CheckoutPage({
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
-        {/* Locked Banner */}
         {orderLocked && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 flex items-center gap-3">
             <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
@@ -219,7 +283,37 @@ export default function CheckoutPage({
           </div>
         )}
 
-        {/* Order Summary */}
+        {/* Free Shipping Eligibility Banner */}
+        {freeShippingEligible !== null && !orderLocked && (
+          <div className={`rounded-xl px-5 py-3.5 flex items-center gap-3 ${
+            freeShippingEligible
+              ? 'bg-green-50 border border-green-200'
+              : 'bg-orange-50 border border-orange-200'
+          }`}>
+            {freeShippingEligible ? (
+              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+            )}
+            <div>
+              <p className={`font-semibold text-sm ${
+                freeShippingEligible ? 'text-green-800' : 'text-orange-800'
+              }`}>
+                {freeShippingEligible
+                  ? 'Area Anda Mendapat Gratis Ongkir!'
+                  : 'Area Anda Tidak Mendapat Gratis Ongkir Instan'}
+              </p>
+              <p className={`text-xs ${
+                freeShippingEligible ? 'text-green-600' : 'text-orange-600'
+              }`}>
+                {freeShippingEligible
+                  ? 'Gratis ongkir berlaku untuk Pre-Order dan Kirim Sekarang.'
+                  : 'Pre-Order tetap gratis. Kirim Sekarang dikenakan Rp5.000.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b flex items-center gap-2">
             <Package className="w-5 h-5 text-green-600" />
@@ -286,7 +380,6 @@ export default function CheckoutPage({
           )}
         </section>
 
-        {/* Shipping Details */}
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b flex items-center gap-2">
             <Truck className="w-5 h-5 text-green-600" />
@@ -314,7 +407,6 @@ export default function CheckoutPage({
               </div>
             </div>
 
-            {/* Shipping Option */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Opsi Pengiriman
@@ -372,8 +464,12 @@ export default function CheckoutPage({
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-orange-500" />
                       <span className="font-semibold text-sm text-gray-800">Kirim Sekarang</span>
-                      <span className="ml-auto text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                        +Rp5.000
+                      <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${
+                        qualifiesForFree
+                          ? 'text-green-600 bg-green-100'
+                          : 'text-orange-600 bg-orange-100'
+                      }`}>
+                        {qualifiesForFree ? 'Gratis' : '+Rp5.000'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">Instan / langsung dikirim</p>
@@ -384,7 +480,6 @@ export default function CheckoutPage({
           </div>
         </section>
 
-        {/* Price Breakdown */}
         <section className="bg-white rounded-xl shadow-sm px-5 py-4 space-y-2.5">
           <div className="flex justify-between text-sm text-gray-600">
             <span>Subtotal Produk</span>
@@ -402,7 +497,6 @@ export default function CheckoutPage({
           </div>
         </section>
 
-        {/* Action Buttons */}
         <div className="space-y-3">
           {!orderLocked ? (
             <>
