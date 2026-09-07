@@ -182,8 +182,8 @@ export default function CheckoutPage({
     doc.text(`Nama    : ${customerName}`, margin, y);
     y += 3;
     const shippingShort =
-      shipping === 'preorder' ? 'Besok jam 05.00 (Gratis)'
-      : shipping === 'ekspedisi' ? 'Ekspedisi (Ongkir di tujuan)'
+      shipping === 'preorder' ? 'Besok jam 05.00 (Ongkir di tujuan)'
+      : shipping === 'ekspedisi' ? 'Besok Jam 17.00 (Ongkir di tujuan)'
       : qualifiesForFree ? 'Kirim Skrg (Gratis)' : 'Kirim Skrg (+Rp5.000)';
     doc.text(`Kirim   : ${shippingShort}`, margin, y);
     y += 3;
