@@ -11,7 +11,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   all: 'Semua Produk',
   vegetables: 'Ikan Laut',
   fish: 'Ikan Laut Utuh',
-  frozen: 'Gula',
+  frozen: 'Ikan Air Tawar Utuh',
   spices: 'Ikan Air Tawar',
 };
 
