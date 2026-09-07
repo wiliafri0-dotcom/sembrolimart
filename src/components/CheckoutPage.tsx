@@ -174,7 +174,7 @@ export default function CheckoutPage({
     y += 3;
     doc.text(`Nama    : ${customerName}`, margin, y);
     y += 3;
-    const shippingShort = shipping === 'preorder' ? 'Pre-Order (Gratis)' : qualifiesForFree ? 'Kirim Skrg (Gratis)' : 'Kirim Skrg (+Rp5.000)';
+    const shippingShort = shipping === 'preorder' ? 'Besok jam 05.00 (Gratis)' : qualifiesForFree ? 'Kirim Skrg (Gratis)' : 'Kirim Skrg (+Rp5.000)';
     doc.text(`Kirim   : ${shippingShort}`, margin, y);
     y += 3;
     const addrLines = doc.splitTextToSize(`Alamat  : ${customerAddress || '-'}`, contentW);
