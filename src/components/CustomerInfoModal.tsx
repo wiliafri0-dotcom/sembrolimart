@@ -81,6 +81,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
           address: fullAddress,
           addressDetail: addressDetail.trim(),
           role: 'buyer',
+          isManualAddress: isManual,
         };
         sessionStorage.setItem('customerInfo', JSON.stringify(info));
         onSubmit(info);

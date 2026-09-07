@@ -113,6 +113,7 @@ function App() {
         cart={cart}
         customerName={customerInfo?.name ?? ''}
         customerAddress={customerInfo?.address ?? ''}
+        isManualAddress={customerInfo?.isManualAddress ?? false}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onBack={() => setShowCheckout(false)}

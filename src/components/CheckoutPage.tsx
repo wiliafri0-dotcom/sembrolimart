@@ -8,12 +8,13 @@ interface CheckoutPageProps {
   cart: CartItem[];
   customerName: string;
   customerAddress: string;
+  isManualAddress: boolean;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onBack: () => void;
 }
 
-type ShippingOption = 'preorder' | 'instant';
+type ShippingOption = 'preorder' | 'instant' | 'ekspedisi';
 
 const ADMIN_WHATSAPP = '6282136146737';
 
@@ -21,6 +22,7 @@ export default function CheckoutPage({
   cart,
   customerName,
   customerAddress,
+  isManualAddress,
   onUpdateQuantity,
   onRemoveItem,
   onBack,
@@ -65,16 +67,19 @@ export default function CheckoutPage({
     }).format(price);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const qualifiesForFree = freeShippingEligible === true;
-  const shippingFee = shipping === 'instant' ? (qualifiesForFree ? 0 : 5000) : 0;
+  const qualifiesForFree = freeShippingEligible === true && !isManualAddress;
+  const needsEkspedisi = !qualifiesForFree;
+  const shippingFee = shipping === 'instant' ? (qualifiesForFree ? 0 : 5000) : shipping === 'ekspedisi' ? 0 : 0;
   const total = subtotal + shippingFee;
 
   const shippingLabel =
     shipping === 'preorder'
       ? 'Besok jam 05.00 – Estimasi bisa lebih karena pengiriman sesuai urutan (Gratis Ongkir)'
-      : qualifiesForFree
-        ? 'Kirim Sekarang / Instan (Gratis Ongkir - Area Anda)'
-        : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
+      : shipping === 'ekspedisi'
+        ? 'Ekspedisi / Jasa Pengiriman (Ongkir ditanggung pembeli, bayar di tujuan)'
+        : qualifiesForFree
+          ? 'Kirim Sekarang / Instan (Gratis Ongkir - Area Anda)'
+          : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
 
   const buildOrderMessage = () => {
     let message = `Halo, saya ingin memesan:\n\n`;
@@ -88,7 +93,9 @@ export default function CheckoutPage({
     });
 
     message += `\n*Subtotal Produk:* ${formatPrice(subtotal)}`;
-    if (shippingFee > 0) {
+    if (shipping === 'ekspedisi') {
+      message += `\n*Ongkir:* Ditanggung pembeli di tujuan`;
+    } else if (shippingFee > 0) {
       message += `\n*Ongkir:* ${formatPrice(shippingFee)}`;
     } else {
       message += `\n*Ongkir:* Gratis`;
@@ -174,7 +181,10 @@ export default function CheckoutPage({
     y += 3;
     doc.text(`Nama    : ${customerName}`, margin, y);
     y += 3;
-    const shippingShort = shipping === 'preorder' ? 'Besok jam 05.00 (Gratis)' : qualifiesForFree ? 'Kirim Skrg (Gratis)' : 'Kirim Skrg (+Rp5.000)';
+    const shippingShort =
+      shipping === 'preorder' ? 'Besok jam 05.00 (Gratis)'
+      : shipping === 'ekspedisi' ? 'Ekspedisi (Ongkir di tujuan)'
+      : qualifiesForFree ? 'Kirim Skrg (Gratis)' : 'Kirim Skrg (+Rp5.000)';
     doc.text(`Kirim   : ${shippingShort}`, margin, y);
     y += 3;
     const addrLines = doc.splitTextToSize(`Alamat  : ${customerAddress || '-'}`, contentW);
@@ -210,7 +220,10 @@ export default function CheckoutPage({
     doc.text(formatPrice(subtotal), margin + contentW, y, { align: 'right' });
     y += 3;
     doc.text('Ongkir', margin, y);
-    doc.text(shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee), margin + contentW, y, { align: 'right' });
+    doc.text(
+      shipping === 'ekspedisi' ? 'Di Tujuan' : shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee),
+      margin + contentW, y, { align: 'right' }
+    );
     y += 3;
 
     doc.setLineWidth(0.5);
@@ -286,29 +299,31 @@ export default function CheckoutPage({
         {/* Free Shipping Eligibility Banner */}
         {freeShippingEligible !== null && !orderLocked && (
           <div className={`rounded-xl px-5 py-3.5 flex items-center gap-3 ${
-            freeShippingEligible
+            qualifiesForFree
               ? 'bg-green-50 border border-green-200'
               : 'bg-orange-50 border border-orange-200'
           }`}>
-            {freeShippingEligible ? (
+            {qualifiesForFree ? (
               <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
             )}
             <div>
               <p className={`font-semibold text-sm ${
-                freeShippingEligible ? 'text-green-800' : 'text-orange-800'
+                qualifiesForFree ? 'text-green-800' : 'text-orange-800'
               }`}>
-                {freeShippingEligible
+                {qualifiesForFree
                   ? 'Area Anda Mendapat Gratis Ongkir!'
-                  : 'Area Anda Tidak Mendapat Gratis Ongkir'}
+                  : isManualAddress
+                    ? 'Alamat Manual – Tidak Dapat Gratis Ongkir'
+                    : 'Area Anda Tidak Mendapat Gratis Ongkir'}
               </p>
               <p className={`text-xs ${
-                freeShippingEligible ? 'text-green-600' : 'text-orange-600'
+                qualifiesForFree ? 'text-green-600' : 'text-orange-600'
               }`}>
-                {freeShippingEligible
+                {qualifiesForFree
                   ? 'Gratis ongkir berlaku untuk radius 3Km dari TOKO'
-                  : 'Besok jam 05.00.'}
+                  : 'Pagi gratis. Siang berbayar. Untuk ongkir lebih jauh, pilih Ekspedisi.'}
               </p>
             </div>
           </div>
@@ -475,6 +490,38 @@ export default function CheckoutPage({
                     <p className="text-xs text-gray-500 mt-0.5">Pengiriman besok sore jam 17:00, Jam perkiraan bisa saja lebih cepat atau lambat</p>
                   </div>
                 </label>
+
+                {needsEkspedisi && (
+                  <label
+                    className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
+                      orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
+                    } ${
+                      shipping === 'ekspedisi'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="shipping"
+                      value="ekspedisi"
+                      checked={shipping === 'ekspedisi'}
+                      onChange={() => setShipping('ekspedisi')}
+                      disabled={orderLocked}
+                      className="mt-0.5 accent-green-600"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-blue-500" />
+                        <span className="font-semibold text-sm text-gray-800">Ekspedisi</span>
+                        <span className="ml-auto text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                          Ongkir di Tujuan
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">Dikirim via jasa pengiriman, ongkir ditanggung pembeli di tujuan</p>
+                    </div>
+                  </label>
+                )}
               </div>
             </div>
           </div>
@@ -487,8 +534,14 @@ export default function CheckoutPage({
           </div>
           <div className="flex justify-between text-sm text-gray-600">
             <span>Ongkir</span>
-            <span className={shippingFee === 0 ? 'text-green-600 font-medium' : ''}>
-              {shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee)}
+            <span className={
+              shipping === 'ekspedisi'
+                ? 'text-blue-600 font-medium'
+                : shippingFee === 0 ? 'text-green-600 font-medium' : ''
+            }>
+              {shipping === 'ekspedisi'
+                ? 'Di Tujuan'
+                : shippingFee === 0 ? 'Gratis' : formatPrice(shippingFee)}
             </span>
           </div>
           <div className="pt-2.5 border-t flex justify-between font-bold text-gray-900">
