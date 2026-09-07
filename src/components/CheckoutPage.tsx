@@ -421,7 +421,15 @@ export default function CheckoutPage({
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-               
+                  <input
+                    type="radio"
+                    name="shipping"
+                    value="preorder"
+                    checked={shipping === 'preorder'}
+                    onChange={() => setShipping('preorder')}
+                    disabled={orderLocked}
+                    className="mt-0.5 accent-green-600"
+                  />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-green-600" />
