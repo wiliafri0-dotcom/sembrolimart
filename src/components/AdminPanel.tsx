@@ -227,7 +227,7 @@ function ProductsTab({ onProductsChange }: { onProductsChange: () => void }) {
                   <option value="vegetables">Minyak</option>
                   <option value="fish">Tepung</option>
                   <option value="frozen">Gula</option>
-                  <option value="spices">Beras</option>
+                  <option value="spices">Ikan Air Tawar</option>
                 </select>
               </div>
 
