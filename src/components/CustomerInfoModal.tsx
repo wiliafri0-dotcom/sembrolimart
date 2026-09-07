@@ -161,7 +161,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="inline w-4 h-4 mr-1" />
-                  Pilih Area Alamat
+                  Pilih Area Alamat (Radius 2KM Gratis Ongkir)
                 </label>
                 {!isManual ? (
                   <>
