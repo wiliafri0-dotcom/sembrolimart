@@ -145,11 +145,11 @@ export default function CheckoutPage({
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('SEMBROLI MART', pageW / 2, y, { align: 'center' });
+    doc.text('Adem Panas Malang', pageW / 2, y, { align: 'center' });
     y += 4;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(5.5);
-    doc.text('Toko Sembako & Kebutuhan Sehari-hari', pageW / 2, y, { align: 'center' });
+    doc.text('Toko Ikan Segar Marinasi dan Frozen', pageW / 2, y, { align: 'center' });
     y += 3;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6);
