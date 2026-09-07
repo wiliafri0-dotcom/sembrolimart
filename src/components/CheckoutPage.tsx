@@ -308,7 +308,7 @@ export default function CheckoutPage({
               }`}>
                 {freeShippingEligible
                   ? 'Gratis ongkir berlaku untuk Pre-Order dan Kirim Sekarang.'
-                  : 'Pre-Order tetap gratis. Kirim Sekarang dikenakan Rp5.000.'}
+                  : 'Besok jam 05.00.'}
               </p>
             </div>
           </div>
