@@ -233,7 +233,7 @@ export default function CheckoutPage({
     doc.setFontSize(5.5);
     doc.text('Terima kasih telah berbelanja', pageW / 2, y, { align: 'center' });
     y += 2.5;
-    doc.text('di SEMBROLI MART!', pageW / 2, y, { align: 'center' });
+    doc.text('di Adem Panas Malang!', pageW / 2, y, { align: 'center' });
     y += 3;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(5);
