@@ -301,7 +301,7 @@ export default function CheckoutPage({
               }`}>
                 {freeShippingEligible
                   ? 'Area Anda Mendapat Gratis Ongkir!'
-                  : 'Area Anda Tidak Mendapat Gratis Ongkir Instan'}
+                  : 'Area Anda Tidak Mendapat Gratis Ongkir'}
               </p>
               <p className={`text-xs ${
                 freeShippingEligible ? 'text-green-600' : 'text-orange-600'
