@@ -225,7 +225,7 @@ function ProductsTab({ onProductsChange }: { onProductsChange: () => void }) {
                   required
                 >
                   <option value="vegetables">Ikan Laut</option>
-                  <option value="fish">Tepung</option>
+                  <option value="fish">Sayur Segar</option>
                   <option value="frozen">Gula</option>
                   <option value="spices">Ikan Air Tawar</option>
                 </select>
