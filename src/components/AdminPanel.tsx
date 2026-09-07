@@ -655,7 +655,7 @@ function PurchaseHistory({ onBack }: { onBack: () => void }) {
               </div>
 
               <div className="mt-2 pt-2 border-t text-xs text-gray-500 flex flex-wrap gap-3">
-                <span>Pengiriman: {order.shipping_type === 'preorder' ? 'Pre-Order' : 'Instan'}</span>
+                <span>Pengiriman: {order.shipping_type === 'preorder' ? 'Besok jam 05.00' : 'Instan'}</span>
                 <span>Ongkir: {order.shipping_fee === 0 ? 'Gratis' : formatPrice(order.shipping_fee)}</span>
                 {order.payment_method && <span>Pembayaran: {order.payment_method}</span>}
                 {order.notes && <span>Catatan: {order.notes}</span>}
