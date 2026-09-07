@@ -427,7 +427,7 @@ function AddressesTab() {
       <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-800">
           <MapPin className="inline w-4 h-4 mr-1" />
-          Area yang ditambahkan di sini akan tampil di form pembeli. Pembeli yang memilih area ini mendapat <strong>gratis ongkir</strong> untuk Kirim Sekarang. Area yang tidak ada di daftar tidak mendapat gratis ongkir instan.
+          Area yang ditambahkan di sini akan tampil di form pembeli. Pembeli yang memilih area ini mendapat <strong>gratis ongkir</strong> 
         </p>
       </div>
 
