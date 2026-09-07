@@ -71,7 +71,7 @@ export default function CheckoutPage({
 
   const shippingLabel =
     shipping === 'preorder'
-      ? 'Pre-Order – Antar Besok Pagi Jam 07.30 (Gratis Ongkir)'
+      ? 'Besok jam 05.00 – Estimasi bisa lebih karena pengiriman sesuai urutan (Gratis Ongkir)'
       : qualifiesForFree
         ? 'Kirim Sekarang / Instan (Gratis Ongkir - Area Anda)'
         : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
