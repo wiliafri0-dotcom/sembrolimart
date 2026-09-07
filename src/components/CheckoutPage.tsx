@@ -433,7 +433,7 @@ export default function CheckoutPage({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-green-600" />
-                      <span className="font-semibold text-sm text-gray-800">Pre-Order</span>
+                      <span className="font-semibold text-sm text-gray-800">Besok jam 05.00</span>
                       <span className="ml-auto text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
                         Gratis
                       </span>
