@@ -14,7 +14,7 @@ interface CheckoutPageProps {
   onBack: () => void;
 }
 
-type ShippingOption = 'ekspedisi';
+type ShippingOption = 'preorder' | 'instant' | 'ekspedisi';
 
 const ADMIN_WHATSAPP = '6282136146737';
 
