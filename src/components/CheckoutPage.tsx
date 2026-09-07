@@ -472,7 +472,7 @@ export default function CheckoutPage({
                         {qualifiesForFree ? 'Gratis' : '+Rp5.000'}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Pengirim</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Pengiriman besok sore jam 17:00, Jam perkiraan bisa saja lebih cepat atau lambat</p>
                   </div>
                 </label>
               </div>
