@@ -32,6 +32,15 @@ export default function CheckoutPage({
   const [addresses, setAddresses] = useState<ShippingAddress[]>([]);
   const [freeShippingEligible, setFreeShippingEligible] = useState<boolean | null>(null);
 
+  // Efek untuk memaksa state pengiriman berubah saat jenis alamat berubah
+  useEffect(() => {
+    if (isManualAddress) {
+      setShipping('ekspedisi');
+    } else {
+      setShipping('preorder');
+    }
+  }, [isManualAddress]);
+
   useEffect(() => {
     fetchAddresses();
   }, []);
@@ -68,7 +77,6 @@ export default function CheckoutPage({
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const qualifiesForFree = freeShippingEligible === true && !isManualAddress;
-  const needsEkspedisi = !qualifiesForFree;
   const shippingFee = shipping === 'instant' ? (qualifiesForFree ? 0 : 5000) : shipping === 'ekspedisi' ? 0 : 0;
   const total = subtotal + shippingFee;
 
@@ -427,35 +435,37 @@ export default function CheckoutPage({
                 Opsi Pengiriman
               </label>
               <div className="space-y-2.5">
-                <label
-                  className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
-                    orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
-                  } ${
-                    shipping === 'preorder'
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="shipping"
-                    value="preorder"
-                    checked={shipping === 'preorder'}
-                    onChange={() => setShipping('preorder')}
-                    disabled={orderLocked}
-                    className="mt-0.5 accent-green-600"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-green-600" />
-                      <span className="font-semibold text-sm text-gray-800">Pagi</span>
-                      <span className="ml-auto text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                        Gratis
-                      </span>
+                {!isManualAddress && (
+                  <label
+                    className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
+                      orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
+                    } ${
+                      shipping === 'preorder'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="shipping"
+                      value="preorder"
+                      checked={shipping === 'preorder'}
+                      onChange={() => setShipping('preorder')}
+                      disabled={orderLocked}
+                      className="mt-0.5 accent-green-600"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-green-600" />
+                        <span className="font-semibold text-sm text-gray-800">Pagi</span>
+                        <span className="ml-auto text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                          Gratis
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">Pengiriman besok pagi jam 05:00, Jam perkiraan bisa saja lebih cepat atau lambat</p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Pengiriman besok pagi jam 05:00, Jam perkiraan bisa saja lebih cepat atau lambat</p>
-                  </div>
-                </label>
+                  </label>
+                )}
 
                 {qualifiesForFree && (
                   <label
@@ -489,37 +499,35 @@ export default function CheckoutPage({
                   </label>
                 )}
 
-                {needsEkspedisi && (
-                  <label
-                    className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
-                      orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
-                    } ${
-                      shipping === 'ekspedisi'
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="shipping"
-                      value="ekspedisi"
-                      checked={shipping === 'ekspedisi'}
-                      onChange={() => setShipping('ekspedisi')}
-                      disabled={orderLocked}
-                      className="mt-0.5 accent-green-600"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-blue-500" />
-                        <span className="font-semibold text-sm text-gray-800">Ekspedisi</span>
-                        <span className="ml-auto text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                          Ongkir di Tujuan
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5">Dikirim via jasa pengiriman, ongkir ditanggung pembeli di tujuan</p>
+                <label
+                  className={`flex items-start gap-3 p-3.5 rounded-lg border-2 transition ${
+                    orderLocked ? 'cursor-default opacity-60' : 'cursor-pointer'
+                  } ${
+                    shipping === 'ekspedisi'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="shipping"
+                    value="ekspedisi"
+                    checked={shipping === 'ekspedisi'}
+                    onChange={() => setShipping('ekspedisi')}
+                    disabled={orderLocked}
+                    className="mt-0.5 accent-green-600"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-blue-500" />
+                      <span className="font-semibold text-sm text-gray-800">Ekspedisi</span>
+                      <span className="ml-auto text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                        Ongkir di Tujuan
+                      </span>
                     </div>
-                  </label>
-                )}
+                    <p className="text-xs text-gray-500 mt-0.5">Dikirim via jasa pengiriman, ongkir ditanggung pembeli di tujuan</p>
+                  </div>
+                </label>
               </div>
             </div>
           </div>
