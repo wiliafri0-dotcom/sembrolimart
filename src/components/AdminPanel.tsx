@@ -224,7 +224,7 @@ function ProductsTab({ onProductsChange }: { onProductsChange: () => void }) {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                   required
                 >
-                  <option value="vegetables">Minyak</option>
+                  <option value="vegetables">Ikan Laut</option>
                   <option value="fish">Tepung</option>
                   <option value="frozen">Gula</option>
                   <option value="spices">Ikan Air Tawar</option>
