@@ -422,7 +422,7 @@ export default function CheckoutPage({
                   }`}
                 >
                   <input
-                    type="radio"
+                    type="-"
                     name="shipping"
                     value="preorder"
                     checked={shipping === 'preorder'}
