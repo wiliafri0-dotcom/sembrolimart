@@ -307,7 +307,7 @@ export default function CheckoutPage({
                 freeShippingEligible ? 'text-green-600' : 'text-orange-600'
               }`}>
                 {freeShippingEligible
-                  ? 'Gratis ongkir berlaku untuk Pre-Order dan Kirim Sekarang.'
+                  ? 'Gratis ongkir berlaku untuk radius 3Km dari TOKO'
                   : 'Besok jam 05.00.'}
               </p>
             </div>
