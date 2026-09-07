@@ -12,7 +12,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   vegetables: 'Minyak',
   fish: 'Tepung',
   frozen: 'Gula',
-  spices: 'Beras',
+  spices: 'Ikan Air Tawar',
 };
 
 function App() {
