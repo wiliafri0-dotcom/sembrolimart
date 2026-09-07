@@ -463,7 +463,7 @@ export default function CheckoutPage({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-orange-500" />
-                      <span className="font-semibold text-sm text-gray-800">Kirim Sekarang</span>
+                      <span className="font-semibold text-sm text-gray-800">Siang</span>
                       <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${
                         qualifiesForFree
                           ? 'text-green-600 bg-green-100'
