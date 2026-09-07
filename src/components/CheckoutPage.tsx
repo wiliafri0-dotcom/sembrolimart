@@ -525,7 +525,7 @@ export default function CheckoutPage({
                         Ongkir di Tujuan
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Dikirim via jasa pengiriman, ongkir ditanggung pembeli di tujuan</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Dikirim via jasa pengiriman, ongkir ditanggung pembeli di tujuan. Untuk jam pengiriman silakan chat kami di WA.</p>
                   </div>
                 </label>
               </div>
