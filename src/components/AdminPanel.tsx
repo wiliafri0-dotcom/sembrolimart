@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus, CreditCard as Edit2, Trash2, Save, Upload, MapPin, Receipt, Package, Store, History, Search } from 'lucide-react';
+import { X, Plus, Minus, CreditCard as Edit2, Trash2, Save, Upload, MapPin, Receipt, Package, Store, History, Search, Printer, CheckCircle2, Circle } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { supabase } from '../lib/supabase';
 import type { Product, ShippingAddress, OrderRow, CartItemSnapshot } from '../types/database';
 
@@ -11,6 +12,8 @@ interface AdminPanelProps {
 type Tab = 'products' | 'addresses' | 'cashier';
 
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
+
+const MIN_PURCHASE = 30000;
 
 export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProps) {
   const [tab, setTab] = useState<Tab>('products');
@@ -61,6 +64,162 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
       {label}
     </button>
   );
+}
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+}
+
+interface ReceiptData {
+  customer_name: string;
+  customer_address: string;
+  shipping_type: string;
+  items: CartItemSnapshot[];
+  subtotal: number;
+  shipping_fee: number;
+  total: number;
+  payment_method?: string;
+  notes?: string;
+  created_at?: string;
+  payment_confirmed?: boolean;
+}
+
+function generateReceiptPDF(order: ReceiptData) {
+  const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 4;
+  const contentW = pageW - margin * 2;
+
+  let y = margin + 2;
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('Adem Panas Malang', pageW / 2, y, { align: 'center' });
+  y += 4;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.text('Toko Ikan Segar Marinasi dan Frozen', pageW / 2, y, { align: 'center' });
+  y += 3;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6);
+  doc.text('STRUK PENJUALAN', pageW / 2, y, { align: 'center' });
+  y += 4;
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, margin + contentW, y);
+  y += 3;
+
+  const dateStr = order.created_at
+    ? new Date(order.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = order.created_at
+    ? new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.text(`Tanggal : ${dateStr}`, margin, y);
+  y += 3;
+  doc.text(`Jam     : ${timeStr}`, margin, y);
+  y += 3;
+  doc.text(`Nama    : ${order.customer_name}`, margin, y);
+  y += 3;
+
+  const shippingShort =
+    order.shipping_type === 'preorder' ? 'Pagi (Gratis)'
+    : order.shipping_type === 'ekspedisi' ? 'Ekspedisi (Ongkir di tujuan)'
+    : order.shipping_type === 'instant' ? 'Instan'
+    : order.shipping_type === 'offline' ? 'Offline / Toko'
+    : order.shipping_type;
+  doc.text(`Kirim   : ${shippingShort}`, margin, y);
+  y += 3;
+
+  if (order.customer_address) {
+    const addrLines = doc.splitTextToSize(`Alamat  : ${order.customer_address}`, contentW);
+    doc.text(addrLines, margin, y);
+    y += addrLines.length * 2.5 + 2;
+  }
+
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, margin + contentW, y);
+  y += 3;
+
+  (order.items || []).forEach((item) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    const nameLines = doc.splitTextToSize(item.name, contentW);
+    doc.text(nameLines, margin, y);
+    y += nameLines.length * 2.5;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.text(`${item.quantity} x ${formatPrice(item.price)}`, margin, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatPrice(item.price * item.quantity), margin + contentW, y, { align: 'right' });
+    y += 3.5;
+  });
+
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, margin + contentW, y);
+  y += 3;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.text('Subtotal', margin, y);
+  doc.text(formatPrice(order.subtotal), margin + contentW, y, { align: 'right' });
+  y += 3;
+  doc.text('Ongkir', margin, y);
+  doc.text(
+    order.shipping_type === 'ekspedisi' ? 'Di Tujuan' : order.shipping_fee === 0 ? 'Gratis' : formatPrice(order.shipping_fee),
+    margin + contentW, y, { align: 'right' }
+  );
+  y += 3;
+
+  if (order.payment_method) {
+    doc.text(`Bayar: ${order.payment_method}`, margin, y);
+    y += 3;
+  }
+
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, margin + contentW, y);
+  y += 3.5;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('TOTAL', margin, y);
+  doc.text(formatPrice(order.total), margin + contentW, y, { align: 'right' });
+  y += 5;
+
+  if (order.payment_confirmed) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.text('Pembayaran: LUNAS', margin, y);
+    y += 3;
+  }
+
+  doc.setLineWidth(0.3);
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(margin, y, margin + contentW, y);
+  doc.setLineDashPattern([], 0);
+  y += 4;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.5);
+  doc.text('Terima kasih telah berbelanja', pageW / 2, y, { align: 'center' });
+  y += 2.5;
+  doc.text('di Adem Panas Malang!', pageW / 2, y, { align: 'center' });
+
+  const pdfBlob = doc.output('blob');
+  const pdfUrl = URL.createObjectURL(pdfBlob);
+  const printWindow = window.open(pdfUrl, '_blank');
+  if (printWindow) {
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  }
 }
 
 function ProductsTab({ onProductsChange }: { onProductsChange: () => void }) {
@@ -184,9 +343,6 @@ function ProductsTab({ onProductsChange }: { onProductsChange: () => void }) {
     setIsAdding(false);
     setEditingId(null);
   };
-
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
 
   return (
     <>
@@ -533,6 +689,7 @@ function PurchaseHistory({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'online' | 'offline'>('all');
   const [search, setSearch] = useState('');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -553,9 +710,6 @@ function PurchaseHistory({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
-
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -568,6 +722,39 @@ function PurchaseHistory({ onBack }: { onBack: () => void }) {
   });
 
   const totalRevenue = filtered.reduce((sum, o) => sum + o.total, 0);
+
+  const togglePaymentConfirmed = async (order: OrderRow) => {
+    setTogglingId(order.id);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ payment_confirmed: !order.payment_confirmed })
+        .eq('id', order.id);
+      if (error) throw error;
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      alert('Gagal memperbarui status pembayaran.');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handlePrintReceipt = (order: OrderRow) => {
+    generateReceiptPDF({
+      customer_name: order.customer_name,
+      customer_address: order.customer_address,
+      shipping_type: order.shipping_type,
+      items: order.items,
+      subtotal: order.subtotal,
+      shipping_fee: order.shipping_fee,
+      total: order.total,
+      payment_method: order.payment_method,
+      notes: order.notes,
+      created_at: order.created_at,
+      payment_confirmed: order.payment_confirmed,
+    });
+  };
 
   return (
     <div>
@@ -655,10 +842,36 @@ function PurchaseHistory({ onBack }: { onBack: () => void }) {
               </div>
 
               <div className="mt-2 pt-2 border-t text-xs text-gray-500 flex flex-wrap gap-3">
-                <span>Pengiriman: {order.shipping_type === 'preorder' ? 'Pagi Jam 05:00' : 'Instan'}</span>
+                <span>Pengiriman: {order.shipping_type === 'preorder' ? 'Pagi Jam 05:00' : order.shipping_type === 'ekspedisi' ? 'Ekspedisi' : order.shipping_type === 'instant' ? 'Instan' : 'Offline'}</span>
                 <span>Ongkir: {order.shipping_fee === 0 ? 'Gratis' : formatPrice(order.shipping_fee)}</span>
                 {order.payment_method && <span>Pembayaran: {order.payment_method}</span>}
                 {order.notes && <span>Catatan: {order.notes}</span>}
+              </div>
+
+              <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
+                <button
+                  onClick={() => togglePaymentConfirmed(order)}
+                  disabled={togglingId === order.id}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    order.payment_confirmed
+                      ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {order.payment_confirmed ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-gray-400" />
+                  )}
+                  {order.payment_confirmed ? 'Pembayaran Dikonfirmasi' : 'Konfirmasi Pembayaran'}
+                </button>
+                <button
+                  onClick={() => handlePrintReceipt(order)}
+                  className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium px-3 py-2 rounded-lg border border-gray-300 text-sm transition"
+                >
+                  <Printer className="w-4 h-4 text-gray-500" />
+                  Cetak Struk
+                </button>
               </div>
             </div>
           ))}
@@ -678,6 +891,7 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lastOrder, setLastOrder] = useState<ReceiptData | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -698,9 +912,6 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
       setLoading(false);
     }
   };
-
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -729,6 +940,7 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const belowMinimum = subtotal > 0 && subtotal < MIN_PURCHASE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -740,10 +952,14 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
       alert('Nama pelanggan harus diisi.');
       return;
     }
+    if (subtotal < MIN_PURCHASE) {
+      alert(`Minimal pembelian adalah ${formatPrice(MIN_PURCHASE)}. Total saat ini ${formatPrice(subtotal)}.`);
+      return;
+    }
 
     setSaving(true);
     try {
-      const { error } = await supabase.from('orders').insert({
+      const orderData = {
         customer_name: customerName.trim(),
         customer_address: customerAddress.trim(),
         shipping_type: 'offline',
@@ -755,9 +971,19 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
         order_source: 'offline',
         payment_method: paymentMethod,
         notes: notes.trim(),
-      });
+      };
+
+      const { error } = await supabase.from('orders').insert(orderData);
 
       if (error) throw error;
+
+      const receiptData: ReceiptData = {
+        ...orderData,
+        created_at: new Date().toISOString(),
+        payment_confirmed: false,
+      };
+      generateReceiptPDF(receiptData);
+      setLastOrder(receiptData);
 
       setSuccess(true);
       setCart([]);
@@ -785,8 +1011,17 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
       </h3>
 
       {success && (
-        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
-          Penjualan berhasil disimpan!
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700 flex items-center justify-between">
+          <span>Penjualan berhasil disimpan! Struk akan dicetak otomatis.</span>
+          {lastOrder && (
+            <button
+              onClick={() => generateReceiptPDF(lastOrder)}
+              className="flex items-center gap-1.5 text-xs font-medium text-green-700 hover:text-green-800 underline"
+            >
+              <Printer className="w-4 h-4" />
+              Cetak Ulang
+            </button>
+          )}
         </div>
       )}
 
@@ -853,6 +1088,11 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
                 <span>Subtotal</span>
                 <span className="text-green-600">{formatPrice(subtotal)}</span>
               </div>
+              {belowMinimum && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-xs text-orange-700">
+                  Minimal pembelian {formatPrice(MIN_PURCHASE)}. Kurang {formatPrice(MIN_PURCHASE - subtotal)} lagi.
+                </div>
+              )}
             </div>
           )}
 
@@ -903,11 +1143,11 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
             </div>
             <button
               type="submit"
-              disabled={saving || cart.length === 0}
+              disabled={saving || cart.length === 0 || subtotal < MIN_PURCHASE}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition duration-200 flex items-center justify-center gap-2"
             >
               <Save className="w-4 h-4" />
-              {saving ? 'Menyimpan...' : 'Simpan Penjualan'}
+              {saving ? 'Menyimpan...' : 'Simpan & Cetak Struk'}
             </button>
           </form>
         </div>

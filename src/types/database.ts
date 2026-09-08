@@ -83,6 +83,7 @@ export type Database = {
           order_source: string;
           payment_method: string;
           notes: string;
+          payment_confirmed: boolean;
           created_at: string;
         };
         Insert: {
@@ -110,6 +111,7 @@ export type Database = {
           order_source?: string;
           payment_method?: string;
           notes?: string;
+          payment_confirmed?: boolean;
         };
       };
     };
