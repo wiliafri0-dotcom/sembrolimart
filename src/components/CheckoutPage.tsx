@@ -16,7 +16,7 @@ interface CheckoutPageProps {
 
 type ShippingOption = 'preorder' | 'instant' | 'ekspedisi';
 
-const ADMIN_WHATSAPP = '6282136146737';
+const ADMIN_WHATSAPP = '6287790225876';
 
 export default function CheckoutPage({
   cart,
