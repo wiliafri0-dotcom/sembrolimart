@@ -86,7 +86,7 @@ export default function CheckoutPage({
       : shipping === 'ekspedisi'
         ? 'Ekspedisi / Jasa Pengiriman (Ongkir ditanggung pembeli, bayar di tujuan)'
         : qualifiesForFree
-          ? 'Kirim Sekarang / Instan (Gratis Ongkir - Area Anda)'
+          ? 'Siang Jam 17.00 / Estimasi bisa lebih karena pengiriman sesuai urutan (Gratis Ongkir)'
           : 'Kirim Sekarang / Instan (Ongkir Rp5.000)';
 
   const buildOrderMessage = () => {
