@@ -13,8 +13,6 @@ type Tab = 'products' | 'addresses' | 'cashier';
 
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
 
-const MIN_PURCHASE = 30000;
-
 export default function AdminPanel({ onClose, onProductsChange }: AdminPanelProps) {
   const [tab, setTab] = useState<Tab>('products');
 
@@ -940,7 +938,6 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const belowMinimum = subtotal > 0 && subtotal < MIN_PURCHASE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -950,10 +947,6 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
     }
     if (!customerName.trim()) {
       alert('Nama pelanggan harus diisi.');
-      return;
-    }
-    if (subtotal < MIN_PURCHASE) {
-      alert(`Minimal pembelian adalah ${formatPrice(MIN_PURCHASE)}. Total saat ini ${formatPrice(subtotal)}.`);
       return;
     }
 
@@ -1088,11 +1081,6 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
                 <span>Subtotal</span>
                 <span className="text-green-600">{formatPrice(subtotal)}</span>
               </div>
-              {belowMinimum && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-xs text-orange-700">
-                  Minimal pembelian {formatPrice(MIN_PURCHASE)}. Kurang {formatPrice(MIN_PURCHASE - subtotal)} lagi.
-                </div>
-              )}
             </div>
           )}
 
@@ -1143,7 +1131,7 @@ function OfflineEntry({ onBack }: { onBack: () => void }) {
             </div>
             <button
               type="submit"
-              disabled={saving || cart.length === 0 || subtotal < MIN_PURCHASE}
+              disabled={saving || cart.length === 0}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition duration-200 flex items-center justify-center gap-2"
             >
               <Save className="w-4 h-4" />

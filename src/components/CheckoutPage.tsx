@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, MessageCircle, Package, Truck, Clock, Printer, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../lib/supabase';
 import type { CartItem, ShippingAddress } from '../types/database';
@@ -16,6 +16,7 @@ interface CheckoutPageProps {
 
 type ShippingOption = 'preorder' | 'instant' | 'ekspedisi';
 
+const MIN_PURCHASE = 30000;
 const ADMIN_WHATSAPP = '6287790225876';
 
 export default function CheckoutPage({
@@ -76,6 +77,7 @@ export default function CheckoutPage({
     }).format(price);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const belowMinimum = subtotal < MIN_PURCHASE;
   const qualifiesForFree = freeShippingEligible === true && !isManualAddress;
   const shippingFee = shipping === 'instant' ? (qualifiesForFree ? 0 : 5000) : shipping === 'ekspedisi' ? 0 : 0;
   const total = subtotal + shippingFee;
@@ -300,6 +302,16 @@ export default function CheckoutPage({
             <div>
               <p className="font-semibold text-amber-800 text-sm">Pesanan Terkunci</p>
               <p className="text-amber-600 text-xs">Pesanan sudah dikirim. Detail tidak dapat diubah.</p>
+            </div>
+          </div>
+        )}
+
+        {!orderLocked && belowMinimum && (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl px-5 py-3.5 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-orange-800 text-sm">Minimum pembelian {formatPrice(MIN_PURCHASE)}</p>
+              <p className="text-orange-600 text-xs">Tambahkan {formatPrice(MIN_PURCHASE - subtotal)} lagi untuk melanjutkan pesanan.</p>
             </div>
           </div>
         )}
@@ -561,7 +573,7 @@ export default function CheckoutPage({
             <>
               <button
                 onClick={handleSendWhatsApp}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || belowMinimum}
                 className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-3 text-base active:scale-[0.98]"
               >
                 <MessageCircle className="w-6 h-6" />

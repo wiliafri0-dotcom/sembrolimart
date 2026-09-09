@@ -36,6 +36,7 @@ export type Database = {
           description?: string;
           in_stock?: boolean;
         };
+        Relationships: [];
       };
       admins: {
         Row: {
@@ -52,6 +53,7 @@ export type Database = {
           username?: string;
           password?: string;
         };
+        Relationships: [];
       };
       shipping_addresses: {
         Row: {
@@ -68,6 +70,7 @@ export type Database = {
           name?: string;
           is_active?: boolean;
         };
+        Relationships: [];
       };
       orders: {
         Row: {
@@ -113,8 +116,13 @@ export type Database = {
           notes?: string;
           payment_confirmed?: boolean;
         };
+        Relationships: [];
       };
     };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
   };
 };
 
