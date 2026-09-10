@@ -210,14 +210,8 @@ function generateReceiptPDF(order: ReceiptData) {
   y += 2.5;
   doc.text('di Adem Panas Malang!', pageW / 2, y, { align: 'center' });
 
-  const pdfBlob = doc.output('blob');
-  const pdfUrl = URL.createObjectURL(pdfBlob);
-  const printWindow = window.open(pdfUrl, '_blank');
-  if (printWindow) {
-    printWindow.onload = () => {
-      printWindow.print();
-    };
-  }
+  const filename = `Struk-${order.customer_name.replace(/\s+/g, '-')}-${Date.now()}.pdf`;
+  doc.save(filename);
 }
 
 function ProductsTab({ onProductsChange }: { onProductsChange: () => void }) {
