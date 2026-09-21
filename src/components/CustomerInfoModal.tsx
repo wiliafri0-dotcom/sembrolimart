@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, MapPin, Lock, ChevronDown, ChevronUp, Home } from 'lucide-react';
+import { User, MapPin, Lock, ChevronDown, ChevronUp, Home, ShoppingBag, Utensils } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { CustomerInfo, ShippingAddress } from '../types/database';
 
@@ -135,9 +135,45 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn relative my-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Selamat Datang!</h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-4">
           {role === 'buyer' ? 'Silakan isi data Anda untuk pengiriman' : 'Silakan login sebagai admin'}
         </p>
+
+        <div className="mb-6 rounded-xl overflow-hidden border border-green-200">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 text-center">
+            <p className="text-white font-bold text-sm">
+              Gratis Ongkir within a 3KM Radius of the Store
+            </p>
+          </div>
+          <div className="bg-green-50 px-4 py-3">
+            <p className="text-xs text-gray-600 text-center mb-3">
+              Belanja juga melalui platform favorit Anda:
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <a
+                href="#"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-orange-400 hover:bg-orange-50 transition"
+              >
+                <ShoppingBag className="w-4 h-4 text-orange-500" />
+                Shopee
+              </a>
+              <a
+                href="#"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-green-400 hover:bg-green-50 transition"
+              >
+                <Utensils className="w-4 h-4 text-green-500" />
+                GrabFood
+              </a>
+              <a
+                href="#"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-red-400 hover:bg-red-50 transition"
+              >
+                <Utensils className="w-4 h-4 text-red-500" />
+                GoFood
+              </a>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {role === 'buyer' && (
