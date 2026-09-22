@@ -158,7 +158,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
                 Shopee
               </a>
               <a
-                href="https://id.shp.ee/GuxsQgvf"
+                href="#"
                 className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-green-400 hover:bg-green-50 transition"
               >
                 <Utensils className="w-4 h-4 text-green-500" />
