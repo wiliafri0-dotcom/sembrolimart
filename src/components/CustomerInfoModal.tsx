@@ -151,7 +151,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
             </p>
             <div className="flex items-center justify-center gap-3">
               <a
-                href="#"
+                href="https://id.shp.ee/GuxsQgvf"
                 className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-orange-400 hover:bg-orange-50 transition"
               >
                 <ShoppingBag className="w-4 h-4 text-orange-500" />
