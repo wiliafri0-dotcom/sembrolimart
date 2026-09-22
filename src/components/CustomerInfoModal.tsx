@@ -165,7 +165,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
                 GrabFood
               </a>
               <a
-                href="#"
+                href="https://gofood.link/a/Uy95ssq"
                 className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-red-400 hover:bg-red-50 transition"
               >
                 <Utensils className="w-4 h-4 text-red-500" />
