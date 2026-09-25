@@ -113,6 +113,7 @@ function App() {
         cart={cart}
         customerName={customerInfo?.name ?? ''}
         customerAddress={customerInfo?.address ?? ''}
+        customerWhatsapp={customerInfo?.whatsapp ?? ''}
         isManualAddress={customerInfo?.isManualAddress ?? false}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
