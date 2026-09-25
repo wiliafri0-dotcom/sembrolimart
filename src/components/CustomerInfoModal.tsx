@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, MapPin, Lock, ChevronDown, ChevronUp, Home, ShoppingBag, Utensils } from 'lucide-react';
+import { User, MapPin, Lock, ChevronDown, ChevronUp, Home, ShoppingBag, Utensils, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { CustomerInfo, ShippingAddress } from '../types/database';
 
@@ -172,6 +172,15 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
                 GoFood
               </a>
             </div>
+            <a
+              href="https://api.whatsapp.com/send?phone=6287790225876&text=Halo%20Adem%20Panas%20Malang%2C%20saya%20ingin%20bertanya"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Hubungi Kami via WhatsApp
+            </a>
           </div>
         </div>
 
