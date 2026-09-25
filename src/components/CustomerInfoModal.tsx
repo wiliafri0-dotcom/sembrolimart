@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, MapPin, Lock, ChevronDown, ChevronUp, Home, ShoppingBag, Utensils, Phone } from 'lucide-react';
+import { User, MapPin, Lock, ChevronDown, ChevronUp, Home, ShoppingBag, Utensils } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { CustomerInfo, ShippingAddress } from '../types/database';
 
@@ -15,10 +15,9 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
   const [addressDetail, setAddressDetail] = useState('');
   const [manualAddress, setManualAddress] = useState('');
   const [isManual, setIsManual] = useState(false);
-  const [whatsapp, setWhatsapp] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({ name: '', address: '', detail: '', manual: '', whatsapp: '', username: '', password: '', auth: '' });
+  const [errors, setErrors] = useState({ name: '', address: '', detail: '', manual: '', username: '', password: '', auth: '' });
 
   useEffect(() => {
     const savedInfo = sessionStorage.getItem('customerInfo');
@@ -51,7 +50,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newErrors = { name: '', address: '', detail: '', manual: '', whatsapp: '', username: '', password: '', auth: '' };
+    const newErrors = { name: '', address: '', detail: '', manual: '', username: '', password: '', auth: '' };
     let hasError = false;
 
     if (role === 'buyer') {
@@ -76,17 +75,11 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
         }
       }
 
-      if (!whatsapp.trim()) {
-        newErrors.whatsapp = 'Nomor WhatsApp harus diisi';
-        hasError = true;
-      }
-
       if (!hasError) {
         const info: CustomerInfo = {
           name: name.trim(),
           address: fullAddress,
           addressDetail: addressDetail.trim(),
-          whatsapp: whatsapp.trim(),
           role: 'buyer',
           isManualAddress: isManual,
         };
@@ -172,7 +165,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
                 GrabFood
               </a>
               <a
-                href="https://gofood.link/a/Uy95ssq"
+                href="#"
                 className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 hover:border-red-400 hover:bg-red-50 transition"
               >
                 <Utensils className="w-4 h-4 text-red-500" />
@@ -200,23 +193,6 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
                   placeholder="Masukkan nama lengkap"
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Phone className="inline w-4 h-4 mr-1" />
-                  Nomor WhatsApp
-                </label>
-                <input
-                  type="tel"
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition ${
-                    errors.whatsapp ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Contoh: 08123456789"
-                />
-                {errors.whatsapp && <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>}
               </div>
 
               <div>
@@ -354,7 +330,7 @@ export default function CustomerInfoModal({ onSubmit }: CustomerInfoModalProps) 
           <button
             onClick={() => {
               setRole(role === 'admin' ? 'buyer' : 'admin');
-              setErrors({ name: '', address: '', detail: '', manual: '', whatsapp: '', username: '', password: '', auth: '' });
+              setErrors({ name: '', address: '', detail: '', manual: '', username: '', password: '', auth: '' });
             }}
             className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition py-2"
           >

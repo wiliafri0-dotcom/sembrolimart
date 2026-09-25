@@ -8,7 +8,6 @@ interface CheckoutPageProps {
   cart: CartItem[];
   customerName: string;
   customerAddress: string;
-  customerWhatsapp: string;
   isManualAddress: boolean;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
@@ -24,7 +23,6 @@ export default function CheckoutPage({
   cart,
   customerName,
   customerAddress,
-  customerWhatsapp,
   isManualAddress,
   onUpdateQuantity,
   onRemoveItem,
@@ -96,7 +94,6 @@ export default function CheckoutPage({
   const buildOrderMessage = () => {
     let message = `Halo, saya ingin memesan:\n\n`;
     message += `*Nama:* ${customerName}\n`;
-    message += `*WhatsApp:* ${customerWhatsapp || '-'}\n`;
     message += `*Alamat:* ${customerAddress}\n`;
     message += `*Pengiriman:* ${shippingLabel}\n\n`;
     message += `*Daftar Pesanan:*\n`;
@@ -194,10 +191,6 @@ export default function CheckoutPage({
     y += 3;
     doc.text(`Nama    : ${customerName}`, margin, y);
     y += 3;
-    if (customerWhatsapp) {
-      doc.text(`WA      : ${customerWhatsapp}`, margin, y);
-      y += 3;
-    }
     const shippingShort =
       shipping === 'preorder' ? 'Besok jam 05.00 (Ongkir di tujuan)'
       : shipping === 'ekspedisi' ? 'Besok Jam 17.00 (Ongkir di tujuan)'
@@ -448,20 +441,6 @@ export default function CheckoutPage({
                 {customerAddress || <span className="text-gray-400 italic">Tidak ada alamat</span>}
               </div>
             </div>
-
-            {customerWhatsapp && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nomor WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={customerWhatsapp}
-                  readOnly
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm"
-                />
-              </div>
-            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

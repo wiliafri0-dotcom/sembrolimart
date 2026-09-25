@@ -139,7 +139,6 @@ export interface CustomerInfo {
   name: string;
   address: string;
   addressDetail: string;
-  whatsapp?: string;
   role: 'buyer' | 'admin';
   isAuthenticated?: boolean;
   isManualAddress?: boolean;
